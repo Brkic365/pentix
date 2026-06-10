@@ -1,66 +1,227 @@
 @import "tailwindcss";
 
-@theme {
-  /* Pentix palette — dark pitch, volt for payments/CTA, debt red for what you owe */
-  --color-pitch: #07090d;
-  --color-surface: #11151d;
-  --color-surface-2: #1a2029;
-  --color-line: #232b37;
-  --color-ink: #f2f5f9;
-  --color-muted: #8b95a5;
-  --color-volt: #c8f31d;
-  --color-volt-deep: #9fc40a;
-  --color-debt: #ff3b4d;
-  --color-debt-deep: #c41e2f;
-  --color-gold: #ffc83d;
+/*
+ * Pentix design tokens. Light is the default theme; the `.dark` block is
+ * ready for a future theme toggle (add class="dark" on <html> + a switch).
+ */
+:root {
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --card-subtle: #f9fafb;
+  --border: #e4e7ec;
+  --border-strong: #d0d5dd;
+  --text: #101828;
+  --text-secondary: #667085;
+  --primary: #15803d;
+  --primary-hover: #14532d;
+  --primary-soft: #ecfdf3;
+  --primary-soft-border: #abefc6;
+  --danger: #d92d20;
+  --danger-soft: #fef3f2;
+  --danger-soft-border: #fecdca;
+  --amber: #b54708;
+  --amber-soft: #fffaeb;
+  --amber-soft-border: #fedf89;
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.04);
+}
 
-  --font-display: var(--font-anton), system-ui, sans-serif;
+.dark {
+  --bg: #0c111d;
+  --card: #161b26;
+  --card-subtle: #1f242f;
+  --border: #283039;
+  --border-strong: #333d4a;
+  --text: #f0f2f5;
+  --text-secondary: #949cab;
+  --primary: #34d399;
+  --primary-hover: #6ee7b7;
+  --primary-soft: #0b2a1d;
+  --primary-soft-border: #15503a;
+  --danger: #f97066;
+  --danger-soft: #2e1513;
+  --danger-soft-border: #5a2622;
+  --amber: #fdb022;
+  --amber-soft: #2b2010;
+  --amber-soft-border: #5c4513;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-card-subtle: var(--card-subtle);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-ink: var(--text);
+  --color-muted: var(--text-secondary);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-soft-border: var(--primary-soft-border);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-soft-border: var(--danger-soft-border);
+  --color-amber: var(--amber);
+  --color-amber-soft: var(--amber-soft);
+  --color-amber-soft-border: var(--amber-soft-border);
+
   --font-sans: var(--font-inter), system-ui, sans-serif;
 }
 
 html {
-  background: var(--color-pitch);
+  background: var(--bg);
 }
 
 body {
-  background: var(--color-pitch);
-  color: var(--color-ink);
-  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-inter), system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Big confident numbers everywhere */
-.font-display {
-  letter-spacing: 0.01em;
+@layer components {
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-card);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    padding: 0.625rem 1rem;
+    transition: background-color 120ms, border-color 120ms, color 120ms;
+    cursor: pointer;
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: #ffffff;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+  }
+
+  .btn-outline {
+    background: var(--card);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+  }
+  .btn-outline:hover:not(:disabled) {
+    background: var(--card-subtle);
+  }
+
+  .btn-danger-outline {
+    background: var(--card);
+    border: 1px solid var(--danger-soft-border);
+    color: var(--danger);
+  }
+  .btn-danger-outline:hover:not(:disabled) {
+    background: var(--danger-soft);
+  }
+
+  .btn-ghost {
+    color: var(--text-secondary);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--card-subtle);
+    color: var(--text);
+  }
+
+  .input {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border-strong);
+    border-radius: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--text);
+  }
+  .input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+  }
+  .input:focus {
+    outline: 2px solid transparent;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent);
+  }
+
+  .label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.375rem;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 9999px;
+    padding: 0.125rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid transparent;
+  }
+  .badge-green {
+    background: var(--primary-soft);
+    border-color: var(--primary-soft-border);
+    color: var(--primary);
+  }
+  .badge-red {
+    background: var(--danger-soft);
+    border-color: var(--danger-soft-border);
+    color: var(--danger);
+  }
+  .badge-amber {
+    background: var(--amber-soft);
+    border-color: var(--amber-soft-border);
+    color: var(--amber);
+  }
+  .badge-gray {
+    background: var(--card-subtle);
+    border-color: var(--border);
+    color: var(--text-secondary);
+  }
+
+  .section-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  .stat-number {
+    font-size: 1.875rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
 }
 
-/* Subtle šahovnica (checkerboard) texture for headers */
-.sahovnica {
-  background-image:
-    linear-gradient(45deg, rgb(255 255 255 / 0.025) 25%, transparent 25%, transparent 75%, rgb(255 255 255 / 0.025) 75%),
-    linear-gradient(45deg, rgb(255 255 255 / 0.025) 25%, transparent 25%, transparent 75%, rgb(255 255 255 / 0.025) 75%);
-  background-size: 28px 28px;
-  background-position: 0 0, 14px 14px;
-}
-
-/* Pulsing ring for the RECORD hero button */
-@keyframes record-pulse {
-  0% { box-shadow: 0 0 0 0 rgb(200 243 29 / 0.45); }
-  70% { box-shadow: 0 0 0 18px rgb(200 243 29 / 0); }
-  100% { box-shadow: 0 0 0 0 rgb(200 243 29 / 0); }
-}
-.record-pulse {
-  animation: record-pulse 2.2s ease-out infinite;
-}
-
-@keyframes debt-blink {
+/* Live indicator dot */
+@keyframes live-pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.55; }
+  50% { opacity: 0.35; }
 }
-.debt-blink {
-  animation: debt-blink 1.6s ease-in-out infinite;
+.live-dot {
+  animation: live-pulse 1.8s ease-in-out infinite;
 }
 
-/* Hide scrollbars on horizontal scroll rows (mobile chips) */
+/* Hide scrollbars on horizontal chip rows (mobile) */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

@@ -13,11 +13,11 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 // Art sits inside the maskable safe zone (~80% of canvas).
 const svg = `
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" fill="#07090d"/>
-  <polygon points="256,70 432,198 365,406 147,406 80,198" fill="#c8f31d"/>
+  <rect width="512" height="512" fill="#ffffff"/>
+  <polygon points="256,70 432,198 365,406 147,406 80,198" fill="#15803d"/>
   <text x="256" y="350" text-anchor="middle"
         font-family="Arial, Helvetica, sans-serif" font-weight="900"
-        font-size="230" fill="#07090d">5</text>
+        font-size="230" fill="#ffffff">5</text>
 </svg>`;
 
 const src = Buffer.from(svg);

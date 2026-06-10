@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, Camera, Minus, Plus, Square } from "lucide-react";
 import { usePushupCounter } from "@/hooks/usePushupCounter";
 import { SENSITIVITY_PRESETS } from "@/lib/engine/repCounter";
 import { submitPushupSet } from "@/actions/pushups";
-import { sklekova } from "@/lib/format";
 
 type Stage = "intro" | "live" | "confirm" | "saving" | "done";
 
@@ -126,50 +126,55 @@ export function RecordFlow({
   /* ── INTRO ─────────────────────────────────────────────────────────── */
   if (stage === "intro") {
     return (
-      <div className="flex min-h-dvh flex-col px-5 pb-10">
-        <header className="flex items-center gap-3 py-4">
-          <Link href={`/t/${tournamentId}`} className="text-muted">
-            ←
+      <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 pb-10 sm:px-6">
+        <div className="py-6">
+          <Link
+            href={`/t/${tournamentId}`}
+            className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink"
+          >
+            <ArrowLeft className="size-4" />
+            Natrag na ligu
           </Link>
-          <h1 className="font-display text-2xl">SNIMI SKLEKOVE</h1>
-        </header>
+          <h1 className="mt-3 text-2xl font-semibold tracking-tight text-ink">
+            Snimi sklekove
+          </h1>
+        </div>
 
-        <div className="rounded-2xl border border-line bg-surface p-5 text-sm leading-relaxed text-muted">
-          <p className="font-semibold text-ink">Kako se plaća dug:</p>
+        <div className="card p-5 text-sm leading-relaxed text-muted">
+          <p className="font-medium text-ink">Prije početka:</p>
           <ol className="mt-2 list-decimal space-y-1.5 pl-5">
-            <li>Nasloni mobitel da te vidi <span className="text-ink">sa strane</span>, cijelo tijelo u kadru.</li>
-            <li>Kamera broji svaki sklek — lakat ispod 95°, pa natrag gore.</li>
-            <li>Na kraju potvrdiš broj. Snimka ide ekipi na uvid. 👀</li>
+            <li>
+              Nasloni mobitel da te vidi <strong className="text-ink">sa strane</strong>,
+              cijelo tijelo u kadru.
+            </li>
+            <li>Kamera broji ponavljanja preko kuta lakta — dolje ispod 95°, pa natrag gore.</li>
+            <li>Na kraju potvrđuješ broj; snimka ostaje ekipi na uvid.</li>
           </ol>
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs uppercase tracking-wider text-muted">
-              Kamera
-            </label>
+            <label className="label">Kamera</label>
             <select
               value={counter.facingMode}
               onChange={(e) =>
                 counter.setFacingMode(e.target.value as "user" | "environment")
               }
-              className="mt-1 w-full rounded-xl border border-line bg-surface-2 px-3 py-2.5"
+              className="input"
             >
               <option value="user">Prednja</option>
               <option value="environment">Stražnja</option>
             </select>
           </div>
           <div>
-            <label className="block text-xs uppercase tracking-wider text-muted">
-              Strogoća brojanja
-            </label>
+            <label className="label">Strogoća brojanja</label>
             <select
               value={preset}
               onChange={(e) => {
                 setPreset(e.target.value);
                 counter.setThresholds(SENSITIVITY_PRESETS[e.target.value]);
               }}
-              className="mt-1 w-full rounded-xl border border-line bg-surface-2 px-3 py-2.5"
+              className="input"
             >
               {Object.keys(SENSITIVITY_PRESETS).map((k) => (
                 <option key={k} value={k}>
@@ -181,22 +186,21 @@ export function RecordFlow({
         </div>
 
         <div className="mt-auto pt-8">
-          <div className="mb-3 text-center text-sm text-muted">
-            Dug: <span className="font-display text-lg text-debt">{outstanding}</span>{" "}
+          <p className="mb-3 text-center text-sm text-muted">
+            Trenutni dug:{" "}
+            <span className="font-semibold tabular-nums text-danger">{outstanding}</span>{" "}
             — svaki sklek skida 1
-          </div>
-          <button
-            onClick={handleStart}
-            className="record-pulse w-full rounded-3xl bg-volt py-6 font-display text-3xl text-pitch"
-          >
-            ● KRENI
+          </p>
+          <button onClick={handleStart} className="btn btn-primary w-full py-4 text-lg">
+            <Camera className="size-5" />
+            Pokreni kameru
           </button>
         </div>
       </div>
     );
   }
 
-  /* ── LIVE ──────────────────────────────────────────────────────────── */
+  /* ── LIVE (camera UI stays dark by design) ─────────────────────────── */
   if (stage === "live") {
     return (
       <div className="relative min-h-dvh bg-black">
@@ -213,61 +217,61 @@ export function RecordFlow({
           />
         </div>
 
-        {/* status overlay */}
         <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
-          <span className="rounded-full bg-black/60 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-ink backdrop-blur">
-            {counter.status === "loading" && "⏳ palim kameru…"}
+          <span className="rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium text-white backdrop-blur">
+            {counter.status === "loading" && "Pokrećem kameru…"}
             {counter.status === "running" &&
               (counter.tracking ? (
-                <span className="text-volt">● pratim te</span>
+                <span className="text-emerald-300">● Pratim te</span>
               ) : (
-                <span className="debt-blink text-debt">ne vidim te — namjesti mobitel</span>
+                <span className="live-dot text-red-300">Ne vidim te — namjesti uređaj</span>
               ))}
-            {counter.status === "error" && <span className="text-debt">greška</span>}
+            {counter.status === "error" && <span className="text-red-300">Greška</span>}
           </span>
-          <span className="rounded-full bg-black/60 px-3 py-1.5 text-xs text-muted backdrop-blur">
-            REC ●
+          <span className="flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs text-white/70 backdrop-blur">
+            <span className="live-dot size-2 rounded-full bg-red-500" />
+            snima se
           </span>
         </div>
 
         {counter.status === "error" && (
-          <div className="absolute inset-x-5 top-1/3 rounded-2xl border border-debt/50 bg-black/80 p-5 text-center backdrop-blur">
-            <p className="text-sm text-ink">{counter.error}</p>
+          <div className="absolute inset-x-5 top-1/3 rounded-xl bg-black/85 p-5 text-center backdrop-blur">
+            <p className="text-sm text-white">{counter.error}</p>
             <button
               onClick={() => counter.start()}
-              className="mt-3 rounded-xl bg-volt px-5 py-2.5 font-bold text-pitch"
+              className="btn btn-primary mt-3"
             >
-              Pokušaj opet
+              Pokušaj ponovno
             </button>
             <Link
               href={`/t/${tournamentId}`}
-              className="mt-2 block text-sm text-muted underline"
+              className="mt-3 block text-sm text-white/60 underline"
             >
-              odustani
+              Odustani
             </Link>
           </div>
         )}
 
-        {/* giant counter */}
         <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-4 bg-gradient-to-t from-black via-black/70 to-transparent px-5 pb-8 pt-20">
           <div className="text-center">
             <div
-              className={`font-display text-[7rem] leading-none ${
-                counter.phase === "DOWN" ? "text-volt" : "text-ink"
+              className={`text-[6.5rem] font-semibold leading-none tabular-nums tracking-tight ${
+                counter.phase === "DOWN" ? "text-emerald-300" : "text-white"
               }`}
             >
               {counter.reps}
             </div>
-            <div className="text-xs uppercase tracking-[0.3em] text-muted">
-              {counter.phase === "DOWN" ? "▼ dolje — guraj!" : "▲ spreman"}
+            <div className="mt-1 text-xs font-medium uppercase tracking-[0.25em] text-white/60">
+              {counter.phase === "DOWN" ? "dolje — guraj" : "spreman"}
             </div>
           </div>
           <button
             onClick={handleStop}
             disabled={counter.status === "loading"}
-            className="w-full max-w-xs rounded-2xl bg-debt py-4 font-display text-2xl text-ink disabled:opacity-50"
+            className="flex w-full max-w-xs items-center justify-center gap-2 rounded-xl bg-white py-4 text-lg font-semibold text-black disabled:opacity-50"
           >
-            ■ GOTOV SAM
+            <Square className="size-5 fill-red-600 text-red-600" />
+            Završi set
           </button>
         </div>
       </div>
@@ -278,63 +282,68 @@ export function RecordFlow({
   if (stage === "confirm" || stage === "saving") {
     const saving = stage === "saving";
     return (
-      <div className="flex min-h-dvh flex-col px-5 pb-10">
-        <header className="py-4">
-          <h1 className="font-display text-2xl">POTVRDI SET</h1>
-          <p className="text-sm text-muted">
+      <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 pb-10 sm:px-6">
+        <div className="py-6">
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">
+            Potvrdi set
+          </h1>
+          <p className="mt-1 text-sm text-muted">
             Kamera je izbrojala{" "}
-            <span className="font-bold text-ink">{counter.reps}</span> (pouzdanost{" "}
-            {Math.round(counter.confidence * 100)}%). Ti imaš zadnju riječ.
+            <span className="font-semibold text-ink">{counter.reps}</span>{" "}
+            (pouzdanost {Math.round(counter.confidence * 100)}%). Ti imaš zadnju
+            riječ.
           </p>
-        </header>
+        </div>
 
-        <div className="flex items-center justify-center gap-6 py-6">
+        <div className="card flex items-center justify-center gap-6 p-6">
           <button
             onClick={() => setConfirmedReps((r) => Math.max(0, r - 1))}
             disabled={saving}
-            className="size-16 rounded-full border border-line bg-surface font-display text-3xl disabled:opacity-40"
-            aria-label="Manje"
+            className="btn btn-outline size-14 rounded-full p-0"
+            aria-label="Smanji"
           >
-            −
+            <Minus className="size-5" />
           </button>
           <div className="text-center">
-            <div className="font-display text-8xl leading-none tabular-nums">
+            <div className="text-7xl font-semibold tabular-nums tracking-tight text-ink">
               {confirmedReps}
             </div>
-            <div className="mt-1 text-xs uppercase tracking-[0.25em] text-muted">
+            <div className="mt-1 text-xs font-medium uppercase tracking-wider text-muted">
               sklekova
             </div>
           </div>
           <button
             onClick={() => setConfirmedReps((r) => Math.min(1000, r + 1))}
             disabled={saving}
-            className="size-16 rounded-full border border-line bg-surface font-display text-3xl disabled:opacity-40"
-            aria-label="Više"
+            className="btn btn-outline size-14 rounded-full p-0"
+            aria-label="Povećaj"
           >
-            +
+            <Plus className="size-5" />
           </button>
         </div>
 
-        {clipUrl ? (
-          <video
-            src={clipUrl}
-            controls
-            playsInline
-            className={`max-h-64 w-full rounded-2xl border border-line bg-black object-contain`}
-          />
-        ) : (
-          <p className="rounded-2xl border border-line bg-surface p-4 text-center text-sm text-muted">
-            Snimka nije dostupna — set ide bez videa.
-          </p>
-        )}
+        <div className="mt-4">
+          {clipUrl ? (
+            <video
+              src={clipUrl}
+              controls
+              playsInline
+              className="max-h-64 w-full rounded-xl border border-line bg-black object-contain"
+            />
+          ) : (
+            <p className="card p-4 text-center text-sm text-muted">
+              Snimka nije dostupna — set se sprema bez videa.
+            </p>
+          )}
+        </div>
 
-        {saveError && <p className="mt-3 text-sm text-debt">{saveError}</p>}
+        {saveError && <p className="mt-3 text-sm text-danger">{saveError}</p>}
 
         <div className="mt-auto space-y-2 pt-6">
           {saving && uploadPct !== null && (
-            <div className="overflow-hidden rounded-full border border-line bg-surface">
+            <div className="h-2 overflow-hidden rounded-full border border-line bg-card">
               <div
-                className="h-2 bg-volt transition-all"
+                className="h-full bg-[var(--primary)] transition-all"
                 style={{ width: `${uploadPct}%` }}
               />
             </div>
@@ -342,13 +351,13 @@ export function RecordFlow({
           <button
             onClick={handleSave}
             disabled={saving || confirmedReps < 1}
-            className="w-full rounded-2xl bg-volt py-4 font-display text-2xl text-pitch disabled:opacity-50"
+            className="btn btn-primary w-full py-3.5 text-base"
           >
             {saving
               ? uploadPct !== null
-                ? `ŠALJEM SNIMKU ${uploadPct}%`
-                : "SPREMAM…"
-              : `PLATI ${confirmedReps} DUGA`}
+                ? `Šaljem snimku ${uploadPct}%`
+                : "Spremam…"
+              : `Plati ${confirmedReps} duga`}
           </button>
           <button
             onClick={() => {
@@ -356,7 +365,7 @@ export function RecordFlow({
               setStage("intro");
             }}
             disabled={saving}
-            className="w-full rounded-2xl border border-line py-3 text-sm text-muted disabled:opacity-50"
+            className="btn btn-ghost w-full"
           >
             Odbaci i ponovi
           </button>
@@ -367,27 +376,29 @@ export function RecordFlow({
 
   /* ── DONE ──────────────────────────────────────────────────────────── */
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center px-5 text-center">
-      <div className="font-display text-7xl text-volt">−{result?.paid ?? 0}</div>
-      <p className="mt-2 text-muted">duga otplaćeno. Kamatari plaču. 🤝</p>
+    <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col items-center justify-center px-4 text-center sm:px-6">
+      <div className="text-6xl font-semibold tabular-nums tracking-tight text-primary">
+        −{result?.paid ?? 0}
+      </div>
+      <p className="mt-2 text-muted">duga otplaćeno</p>
       {uploadFailed && (
         <p className="mt-2 text-xs text-muted">
-          (snimka se nije uspjela poslati — set je svejedno upisan)
+          Snimka se nije uspjela poslati — set je svejedno upisan.
         </p>
       )}
-      <div className="mt-6 rounded-2xl border border-line bg-surface px-8 py-5">
-        <div className="text-xs uppercase tracking-[0.2em] text-muted">
+      <div className="card mt-6 px-10 py-5">
+        <div className="text-xs font-medium uppercase tracking-wider text-muted">
           preostali dug
         </div>
         <div
-          className={`font-display text-5xl ${
-            (result?.outstanding ?? 0) > 0 ? "text-debt" : "text-volt"
+          className={`mt-1 text-5xl font-semibold tabular-nums tracking-tight ${
+            (result?.outstanding ?? 0) > 0 ? "text-danger" : "text-primary"
           }`}
         >
           {result?.outstanding ?? 0}
         </div>
         {result && result.outstanding === 0 && (
-          <div className="mt-1 text-sm text-volt">ČIST SI! ⚡</div>
+          <span className="badge badge-green mt-2">sve plaćeno</span>
         )}
       </div>
       <div className="mt-8 flex w-full max-w-xs flex-col gap-2">
@@ -398,22 +409,14 @@ export function RecordFlow({
             setResult(null);
             setStage("intro");
           }}
-          className="rounded-2xl bg-volt py-3.5 font-display text-xl text-pitch"
+          className="btn btn-primary py-3"
         >
-          JOŠ JEDAN SET
+          Još jedan set
         </button>
-        <Link
-          href={`/t/${tournamentId}`}
-          className="rounded-2xl border border-line py-3.5 font-semibold text-ink"
-        >
+        <Link href={`/t/${tournamentId}`} className="btn btn-outline py-3">
           Natrag na ligu
         </Link>
       </div>
-      {result && result.outstanding > 0 && (
-        <p className="mt-6 text-xs text-muted">
-          još {sklekova(result.outstanding)} do mira. Kamata ne čeka.
-        </p>
-      )}
     </div>
   );
 }

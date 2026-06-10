@@ -2,16 +2,16 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Pentix — sklekovi se broje",
+    name: "Pentix — golovi se plaćaju sklekovima",
     short_name: "Pentix",
     description:
-      "Svaki gol na SP-u 2026 = sklek dug. Penta = 5: pet sklekova po golu. Snimi, izbroji, vrati dug prije nego kamata pojede ekipu.",
+      "Pentix pretvara golove Svjetskog prvenstva 2026. u sklek-dug vaše ekipe. Kamera broji ponavljanja, ljestvica prati dug, kamata raste dok se ne odradi.",
     id: "/",
     start_url: "/dashboard",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#07090d",
-    theme_color: "#07090d",
+    background_color: "#f6f7f9",
+    theme_color: "#ffffff",
     lang: "hr",
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },

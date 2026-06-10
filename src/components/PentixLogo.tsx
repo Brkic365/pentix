@@ -1,29 +1,31 @@
 /**
- * The Pentix mark: a pentagon (penta = 5) wrapped around the base unit of the
- * whole economy — 5 pushups per goal.
+ * The Pentix mark: a pentagon (penta = 5) around the base unit of the whole
+ * economy — 5 pushups per goal.
  */
-export function PentixMark({ size = 36 }: { size?: number }) {
+export function PentixMark({
+  size = 28,
+  className = "",
+}: {
+  size?: number;
+  className?: string;
+}) {
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 100 100"
       aria-hidden
-      className="shrink-0"
+      className={`shrink-0 ${className}`}
     >
-      <polygon
-        points="50,4 96,38 78,92 22,92 4,38"
-        fill="#c8f31d"
-        stroke="#07090d"
-        strokeWidth="4"
-      />
+      <polygon points="50,4 96,38 78,92 22,92 4,38" fill="var(--primary, #15803d)" />
       <text
         x="50"
-        y="70"
+        y="72"
         textAnchor="middle"
-        fontFamily="var(--font-anton), sans-serif"
-        fontSize="56"
-        fill="#07090d"
+        fontFamily="var(--font-inter), system-ui, sans-serif"
+        fontWeight="700"
+        fontSize="52"
+        fill="#ffffff"
       >
         5
       </text>
@@ -31,15 +33,15 @@ export function PentixMark({ size = 36 }: { size?: number }) {
   );
 }
 
-export function PentixLogo({ size = 32 }: { size?: number }) {
+export function PentixLogo({ size = 26 }: { size?: number }) {
   return (
     <span className="inline-flex items-center gap-2">
       <PentixMark size={size} />
       <span
-        className="font-display text-ink tracking-wide"
-        style={{ fontSize: size * 0.78 }}
+        className="font-semibold tracking-tight text-ink"
+        style={{ fontSize: size * 0.72 }}
       >
-        PENTIX
+        Pentix
       </span>
     </span>
   );

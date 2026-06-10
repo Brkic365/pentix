@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { Plus } from "lucide-react";
 import { logGoal } from "@/actions/goals";
 import { TeamFlag } from "@/components/TeamFlag";
 
@@ -13,7 +14,7 @@ interface TeamInfo {
 const LATE_FROM_MINUTE = 85;
 
 /**
- * The 5-second goal entry: tap team → tap scorer chip (or type) → GOL.
+ * Fast goal entry: tap team → tap scorer chip (or type) → submit.
  * Minute is prefilled from kickoff, the late flag auto-follows it.
  */
 export function GoalFastEntry({
@@ -74,7 +75,7 @@ export function GoalFastEntry({
 
   function submit() {
     if (teamId === null) {
-      setError("Tko je zabio? Odaberi ekipu.");
+      setError("Odaberi ekipu koja je zabila.");
       return;
     }
     const fd = new FormData();
@@ -90,7 +91,7 @@ export function GoalFastEntry({
         reset();
         setOpen(false);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Nešto je puklo. Probaj opet.");
+        setError(e instanceof Error ? e.message : "Nešto je pošlo po zlu. Pokušaj ponovno.");
       }
     });
   }
@@ -104,56 +105,62 @@ export function GoalFastEntry({
           );
           setOpen(true);
         }}
-        className="w-full rounded-2xl bg-volt py-4 font-display text-2xl text-pitch"
+        className="btn btn-primary w-full py-3 text-base"
       >
-        + GOL ⚽
+        <Plus className="size-5" />
+        Upiši gol
       </button>
     );
   }
 
-  const teamBtn = (team: TeamInfo) => (
-    <button
-      key={team.id}
-      type="button"
-      onClick={() => setTeamId(team.id)}
-      className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-3.5 font-semibold transition-colors ${
-        teamId === team.id
-          ? "border-volt bg-volt/15 text-volt"
-          : "border-line bg-surface-2 text-ink"
-      }`}
-    >
-      <TeamFlag flagUrl={team.flagUrl} name={team.name} size={18} />
-      <span className="truncate">
-        {team.name}
-        {team.id === mainCountryId && " ★"}
-      </span>
-    </button>
-  );
+  const chipCls = (active: boolean) =>
+    `shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+      active
+        ? "border-primary-soft-border bg-primary-soft text-primary"
+        : "border-line-strong bg-card text-muted hover:text-ink"
+    }`;
 
   return (
-    <div className="rounded-2xl border border-volt/50 bg-surface p-4">
+    <div className="card p-5">
       <div className="flex items-center justify-between">
-        <h3 className="font-display text-lg">GOL!</h3>
+        <h3 className="font-semibold text-ink">Novi gol</h3>
         <button
           type="button"
           onClick={() => {
             reset();
             setOpen(false);
           }}
-          className="text-sm text-muted"
+          className="text-sm text-muted hover:text-ink"
         >
-          odustani
+          Odustani
         </button>
       </div>
 
-      <div className="mt-3 flex gap-2">{[homeTeam, awayTeam].map(teamBtn)}</div>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        {[homeTeam, awayTeam].map((team) => (
+          <button
+            key={team.id}
+            type="button"
+            onClick={() => setTeamId(team.id)}
+            className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-3 text-sm font-medium transition-colors ${
+              teamId === team.id
+                ? "border-primary-soft-border bg-primary-soft text-primary"
+                : "border-line-strong bg-card text-ink hover:bg-card-subtle"
+            }`}
+          >
+            <TeamFlag flagUrl={team.flagUrl} name={team.name} size={16} />
+            <span className="truncate">{team.name}</span>
+            {team.id === mainCountryId && <span aria-hidden>★</span>}
+          </button>
+        ))}
+      </div>
 
       <div className="mt-3">
         <input
           value={scorer}
           onChange={(e) => setScorer(e.target.value)}
           placeholder="Strijelac (npr. Livaja)"
-          className="w-full rounded-xl border border-line bg-surface-2 px-4 py-3 placeholder:text-muted/60 focus:border-volt focus:outline-none"
+          className="input"
         />
         {chips.length > 0 && (
           <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto">
@@ -162,11 +169,7 @@ export function GoalFastEntry({
                 key={c}
                 type="button"
                 onClick={() => setScorer(c)}
-                className={`shrink-0 rounded-full border px-3 py-1.5 text-sm ${
-                  scorer === c
-                    ? "border-volt bg-volt/15 text-volt"
-                    : "border-line text-muted"
-                }`}
+                className={chipCls(scorer === c)}
               >
                 {c}
               </button>
@@ -175,7 +178,7 @@ export function GoalFastEntry({
         )}
       </div>
 
-      <div className="mt-3 flex items-center gap-3">
+      <div className="mt-3 flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-sm text-muted">
           minuta
           <input
@@ -185,49 +188,38 @@ export function GoalFastEntry({
             max={130}
             value={minute}
             onChange={(e) => updateMinute(Number(e.target.value))}
-            className="w-20 rounded-xl border border-line bg-surface-2 px-3 py-2.5 text-center text-ink focus:border-volt focus:outline-none"
+            className="input w-20 text-center"
           />
         </label>
         <div className="no-scrollbar flex flex-1 gap-2 overflow-x-auto">
-          {[
-            { label: "penal", value: isPenalty, set: setIsPenalty },
-            { label: "autogol", value: isOwnGoal, set: setIsOwnGoal },
-          ].map((t) => (
-            <button
-              key={t.label}
-              type="button"
-              onClick={() => t.set(!t.value)}
-              className={`shrink-0 rounded-full border px-3 py-1.5 text-sm ${
-                t.value ? "border-volt bg-volt/15 text-volt" : "border-line text-muted"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+          <button type="button" onClick={() => setIsPenalty(!isPenalty)} className={chipCls(isPenalty)}>
+            jedanaesterac
+          </button>
+          <button type="button" onClick={() => setIsOwnGoal(!isOwnGoal)} className={chipCls(isOwnGoal)}>
+            autogol
+          </button>
           <button
             type="button"
             onClick={() => {
               setLateTouched(true);
               setIsLate(!isLate);
             }}
-            className={`shrink-0 rounded-full border px-3 py-1.5 text-sm ${
-              isLate ? "border-volt bg-volt/15 text-volt" : "border-line text-muted"
-            }`}
+            className={chipCls(isLate)}
           >
-            kasni (85&apos;+)
+            kasni (85′+)
           </button>
         </div>
       </div>
 
-      {error && <p className="mt-2 text-sm text-debt">{error}</p>}
+      {error && <p className="mt-3 text-sm text-danger">{error}</p>}
 
       <button
         type="button"
         disabled={pending}
         onClick={submit}
-        className="mt-3 w-full rounded-xl bg-volt py-3.5 font-display text-xl text-pitch disabled:opacity-60"
+        className="btn btn-primary mt-4 w-full py-3"
       >
-        {pending ? "UPISUJEM…" : "UPIŠI GOL"}
+        {pending ? "Upisujem…" : "Upiši gol"}
       </button>
     </div>
   );

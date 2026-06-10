@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check, Copy } from "lucide-react";
 
 export function CopyButton({ text, label = "Kopiraj" }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
@@ -17,9 +18,10 @@ export function CopyButton({ text, label = "Kopiraj" }: { text: string; label?: 
           window.prompt("Kopiraj ručno:", text);
         }
       }}
-      className="rounded-xl bg-ink px-4 py-2 text-sm font-semibold text-pitch"
+      className="btn btn-outline"
     >
-      {copied ? "Kopirano ✓" : label}
+      {copied ? <Check className="size-4 text-primary" /> : <Copy className="size-4" />}
+      {copied ? "Kopirano" : label}
     </button>
   );
 }

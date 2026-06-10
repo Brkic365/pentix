@@ -13,9 +13,5 @@ export default async function RecordPage({
   const { member } = await requireMember(id);
   const debt = await getMemberDebt(member.id);
 
-  return (
-    <main className="mx-auto w-full max-w-lg">
-      <RecordFlow tournamentId={id} outstanding={debt.outstanding} />
-    </main>
-  );
+  return <RecordFlow tournamentId={id} outstanding={debt.outstanding} />;
 }

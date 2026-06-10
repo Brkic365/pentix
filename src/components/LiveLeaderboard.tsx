@@ -4,11 +4,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { LeaderboardRow } from "@/lib/queries";
-import { sklekova } from "@/lib/format";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 const POLL_MS = 10_000;
-const MEDALS = ["🥇", "🥈", "🥉"];
 
 function Avatar({ row }: { row: LeaderboardRow }) {
   if (row.avatarUrl) {
@@ -21,7 +19,7 @@ function Avatar({ row }: { row: LeaderboardRow }) {
     );
   }
   return (
-    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-surface-2 text-sm font-bold text-muted">
+    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-card-subtle text-sm font-semibold text-muted">
       {row.displayName.slice(0, 2).toUpperCase()}
     </span>
   );
@@ -71,7 +69,7 @@ export function LiveLeaderboard({
       )
       .subscribe((status) => setLive(status === "SUBSCRIBED"));
 
-    // …polling fallback always armed (10s when offline, slow safety net when live)
+    // …polling fallback always armed
     const interval = setInterval(refetch, POLL_MS);
 
     return () => {
@@ -81,73 +79,71 @@ export function LiveLeaderboard({
     };
   }, [tournamentId, refetch]);
 
+  const totalOutstanding = rows.reduce((s, r) => s + r.outstanding, 0);
+
   return (
     <section>
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-xl">LJESTVICA DUŽNIKA</h2>
-        <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-muted">
+        <h2 className="section-title">Ljestvica</h2>
+        <span className="flex items-center gap-1.5 text-xs text-muted">
           <span
-            className={`size-2 rounded-full ${live ? "bg-volt" : "bg-muted/40"}`}
+            className={`size-2 rounded-full ${
+              live ? "live-dot bg-[var(--primary)]" : "bg-[var(--border-strong)]"
+            }`}
           />
-          {live ? "uživo" : "osvježava se"}
+          {live ? "uživo" : "osvježava se svakih 10 s"}
         </span>
       </div>
-      <ol className="mt-3 space-y-2">
+      <div className="card mt-3 divide-y divide-[var(--border)]">
         {rows.map((row, i) => {
           const isMe = row.memberId === myMemberId;
           return (
-            <li
+            <div
               key={row.memberId}
-              className={`flex items-center gap-3 rounded-2xl border p-3 ${
-                isMe ? "border-volt/60 bg-volt/5" : "border-line bg-surface"
+              className={`flex items-center gap-3 px-4 py-3 first:rounded-t-xl last:rounded-b-xl ${
+                isMe ? "bg-primary-soft/60" : ""
               }`}
             >
-              <span className="w-7 text-center font-display text-lg text-muted">
-                {MEDALS[i] ?? i + 1}
+              <span
+                className={`w-6 text-center text-sm font-semibold ${
+                  i === 0 ? "text-primary" : "text-muted"
+                }`}
+              >
+                {i + 1}
               </span>
               <Avatar row={row} />
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold">
-                  {row.displayName}
-                  {isMe && <span className="text-volt"> (ti)</span>}
+                <div className="flex items-center gap-2">
+                  <span className="truncate text-sm font-medium text-ink">
+                    {row.displayName}
+                  </span>
+                  {isMe && <span className="badge badge-green">ti</span>}
                 </div>
-                <div className="text-[11px] text-muted">
+                <div className="mt-0.5 text-xs text-muted">
                   plaćeno {row.totalPaid}
-                  {row.unpaidInterest > 0 && (
-                    <span className="text-debt">
-                      {" "}
-                      · kamata {row.unpaidInterest}
-                    </span>
-                  )}
-                  {row.handicapMultiplier !== 1 && (
-                    <span> · ×{row.handicapMultiplier}</span>
-                  )}
+                  {row.unpaidInterest > 0 && ` · kamata ${row.unpaidInterest}`}
+                  {row.handicapMultiplier !== 1 && ` · ×${row.handicapMultiplier}`}
                 </div>
               </div>
-              <div
-                className={`text-right font-display text-lg tabular-nums ${
-                  row.outstanding > 0 ? "text-debt" : "text-volt"
-                }`}
-              >
+              <div className="text-right">
                 {row.outstanding > 0 ? (
                   <>
-                    {row.outstanding}
-                    <div className="text-[10px] font-sans uppercase tracking-wider text-muted">
-                      preostalo
+                    <div className="text-lg font-semibold tabular-nums text-danger">
+                      {row.outstanding}
                     </div>
+                    <div className="text-[11px] text-muted">preostalo</div>
                   </>
                 ) : (
-                  "ČIST ✓"
+                  <span className="badge badge-green">čisto</span>
                 )}
               </div>
-            </li>
+            </div>
           );
         })}
-      </ol>
-      {rows.length > 0 && (
-        <p className="mt-2 text-center text-[11px] text-muted">
-          najmanje duguje = vodi · {sklekova(rows.reduce((s, r) => s + r.outstanding, 0))}{" "}
-          visi nad ekipom
+      </div>
+      {rows.length > 1 && (
+        <p className="mt-2 text-center text-xs text-muted">
+          Najmanje duguje — vodi. Ukupno nad ekipom: {totalOutstanding} sklekova.
         </p>
       )}
     </section>

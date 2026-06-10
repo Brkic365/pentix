@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireAdmin, requireUser } from "@/lib/users";
 import { generateInviteCode } from "@/lib/invite";
-import { DEFAULT_CONFIG, parsePentixConfig, pentixConfigSchema } from "@/lib/config";
+import { DEFAULT_CONFIG, parsePentixConfig } from "@/lib/config";
+import { hasConfigFields, parseConfigFormData } from "@/lib/configForm";
 import { eliminationAmount, topThreeAmount } from "@/lib/engine/accrual";
 
 const HANDICAP_MIN = 0.5;
@@ -18,6 +19,9 @@ export async function createTournament(formData: FormData) {
   if (!name || !Number.isInteger(mainCountryId)) {
     throw new Error("Naziv i glavna reprezentacija su obavezni.");
   }
+  // The creation form ships the full formula editor; fall back to defaults
+  // when a caller submits without it.
+  const config = hasConfigFields(formData) ? parseConfigFormData(formData) : DEFAULT_CONFIG;
 
   const template = await db.templateMatch.findMany({ orderBy: { id: "asc" } });
 
@@ -26,7 +30,7 @@ export async function createTournament(formData: FormData) {
       data: {
         name,
         mainCountryId,
-        config: DEFAULT_CONFIG,
+        config,
         ownerId: user.id,
         status: "ACTIVE",
         inviteCode: generateInviteCode(),
@@ -72,53 +76,11 @@ export async function joinByCode(formData: FormData) {
 
 export async function updateConfig(tournamentId: string, formData: FormData) {
   await requireAdmin(tournamentId);
-
-  const raw = {
-    baseReps: Number(formData.get("baseReps")),
-    phaseMultipliers: {
-      GROUP: Number(formData.get("pm_GROUP")),
-      R32: Number(formData.get("pm_R32")),
-      R16: Number(formData.get("pm_R16")),
-      QF: Number(formData.get("pm_QF")),
-      SF: Number(formData.get("pm_SF")),
-      THIRD: Number(formData.get("pm_THIRD")),
-      FINAL: Number(formData.get("pm_FINAL")),
-    },
-    mainTeamGoalMultiplier: Number(formData.get("mainTeamGoalMultiplier")),
-    concededGoalMultiplier: Number(formData.get("concededGoalMultiplier")),
-    trackNeutralMatches: formData.get("trackNeutralMatches") === "on",
-    eliminationPenalty: Number(formData.get("eliminationPenalty")),
-    topThreeBonus: {
-      first: Number(formData.get("ttb_first")),
-      second: Number(formData.get("ttb_second")),
-      third: Number(formData.get("ttb_third")),
-    },
-    flatBonuses: {
-      favoritePlayerName: String(formData.get("favoritePlayerName") ?? "").trim(),
-      favoritePlayerGoal: Number(formData.get("favoritePlayerGoal")),
-      lateGoal: Number(formData.get("lateGoal")),
-      penaltyGoal: Number(formData.get("penaltyGoal")),
-      hatTrickThirdGoalDoubles: formData.get("hatTrickThirdGoalDoubles") === "on",
-    },
-    interest: {
-      dailyRate: Number(formData.get("interestDailyRate")),
-      capMultiplier: Number(formData.get("interestCapMultiplier")),
-    },
-    shootout: {
-      enabled: formData.get("shootoutEnabled") === "on",
-      everyoneReps: Number(formData.get("shootoutEveryoneReps")),
-      perMissBonus: Number(formData.get("shootoutPerMissBonus")),
-    },
-  };
-
-  const parsed = pentixConfigSchema.safeParse(raw);
-  if (!parsed.success) {
-    throw new Error("Neispravne vrijednosti formule.");
-  }
+  const config = parseConfigFormData(formData);
 
   await db.tournament.update({
     where: { id: tournamentId },
-    data: { config: parsed.data },
+    data: { config },
   });
   revalidatePath(`/t/${tournamentId}/settings`);
   revalidatePath(`/t/${tournamentId}`);

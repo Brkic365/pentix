@@ -1,11 +1,13 @@
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireMember } from "@/lib/users";
 import { formatDateTime } from "@/lib/format";
+import { AppHeader } from "@/components/AppHeader";
 
 export const dynamic = "force-dynamic";
 
-/** Anti-cheat corner: every recorded set, clip included, for the whole crew. */
+/** Accountability corner: every recorded set, clip included. */
 export default async function ActivityPage({
   params,
 }: {
@@ -22,57 +24,69 @@ export default async function ActivityPage({
   });
 
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-lg px-5 pb-16">
-      <header className="flex items-center gap-3 py-4">
-        <Link href={`/t/${id}`} className="text-muted">
-          ←
-        </Link>
-        <div>
-          <h1 className="font-display text-2xl">DOKAZI</h1>
-          <p className="text-xs text-muted">
-            Svaki set, svaka snimka. Ekipa kontrolira ekipu. 👀
+    <div className="min-h-dvh bg-bg">
+      <AppHeader />
+      <main className="mx-auto w-full max-w-3xl px-4 pb-16 sm:px-6">
+        <div className="py-8">
+          <Link
+            href={`/t/${id}`}
+            className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink"
+          >
+            <ArrowLeft className="size-4" />
+            Natrag na ligu
+          </Link>
+          <h1 className="mt-3 text-2xl font-semibold tracking-tight text-ink">
+            Dokazi
+          </h1>
+          <p className="mt-1 text-sm text-muted">
+            Svaki snimljeni set ostaje ekipi na uvid.
           </p>
         </div>
-      </header>
 
-      {sets.length === 0 && (
-        <p className="mt-6 rounded-2xl border border-line bg-surface p-5 text-center text-sm text-muted">
-          Još nitko ništa nije platio. Sramota.
-        </p>
-      )}
+        {sets.length === 0 && (
+          <p className="card p-8 text-center text-sm text-muted">
+            Još nitko nije snimio nijedan set.
+          </p>
+        )}
 
-      <div className="space-y-3">
-        {sets.map((s) => (
-          <article key={s.id} className="rounded-2xl border border-line bg-surface p-4">
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <div className="truncate font-semibold">{s.member.user.displayName}</div>
-                <div className="text-[11px] text-muted">
-                  {formatDateTime(s.createdAt)} · kamera: {s.cvReps} · pouzdanost{" "}
-                  {Math.round(s.cvConfidence * 100)}%
-                  {s.reps !== s.cvReps && " · ručno ispravljeno"}
+        <div className="space-y-3">
+          {sets.map((s) => (
+            <article key={s.id} className="card p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="truncate font-medium text-ink">
+                    {s.member.user.displayName}
+                  </div>
+                  <div className="mt-0.5 text-xs text-muted">
+                    {formatDateTime(s.createdAt)} · kamera izbrojala {s.cvReps} ·
+                    pouzdanost {Math.round(s.cvConfidence * 100)}%
+                    {s.reps !== s.cvReps && " · ručno ispravljeno"}
+                  </div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <div className="text-xl font-semibold tabular-nums text-primary">
+                    −{s.reps}
+                  </div>
+                  <div className="text-[11px] text-muted">duga</div>
                 </div>
               </div>
-              <div className="shrink-0 rounded-xl bg-volt/15 px-3 py-1.5 font-display text-xl text-volt">
-                −{s.reps}
-              </div>
-            </div>
-            {s.videoUrl ? (
-              <video
-                src={s.videoUrl}
-                controls
-                playsInline
-                preload="metadata"
-                className="mt-3 max-h-72 w-full rounded-xl border border-line bg-black object-contain"
-              />
-            ) : (
-              <p className="mt-3 text-xs italic text-muted">
-                bez snimke — vjerujemo mu na riječ (ovaj put)
-              </p>
-            )}
-          </article>
-        ))}
-      </div>
-    </main>
+              {s.videoUrl ? (
+                <video
+                  src={s.videoUrl}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="mt-3 max-h-72 w-full rounded-lg border border-line bg-black object-contain"
+                />
+              ) : (
+                <p className="mt-3 text-xs italic text-muted">
+                  Set je upisan bez snimke.
+                </p>
+              )}
+            </article>
+          ))}
+        </div>
+      </main>
+    </div>
   );
 }

@@ -57,18 +57,18 @@ export function LiveScoreSuggestion({
   }
 
   return (
-    <div className="mt-3 flex items-center gap-2 rounded-xl border border-gold/40 bg-gold/10 px-3 py-2.5 text-sm">
+    <div className="mt-3 flex items-center gap-2 rounded-lg border border-amber-soft-border bg-amber-soft px-3 py-2.5 text-sm text-amber">
       <span className="flex-1">
-        📡 Vanjski izvor javlja{" "}
+        Vanjski izvor javlja{" "}
         <strong>
           {sug.homeScore}:{sug.awayScore}
         </strong>
-        {sug.finished && " (kraj)"} — kod nas je {homeScore}:{awayScore}. Fali
-        gol? Upiši ga ručno.
+        {sug.finished && " (kraj)"} — ovdje je upisano {homeScore}:{awayScore}.
+        Nedostaje li gol, upiši ga ručno.
       </span>
       <button
         onClick={() => setDismissed(true)}
-        className="shrink-0 text-muted"
+        className="shrink-0 font-medium"
         aria-label="Sakrij"
       >
         ✕
