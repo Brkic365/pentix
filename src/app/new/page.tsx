@@ -4,8 +4,9 @@ import { db } from "@/lib/db";
 import { requireUser } from "@/lib/users";
 import { DEFAULT_CONFIG } from "@/lib/config";
 import { createTournament } from "@/actions/tournaments";
-import { AppHeader } from "@/components/AppHeader";
+import { AppShell } from "@/components/AppShell";
 import { ConfigFields } from "@/components/ConfigFields";
+import { FormulaPresetPicker } from "@/components/FormulaPresetPicker";
 
 export const dynamic = "force-dynamic";
 
@@ -14,8 +15,7 @@ export default async function NewTournamentPage() {
   const teams = await db.team.findMany({ orderBy: { name: "asc" } });
 
   return (
-    <div className="min-h-dvh bg-bg">
-      <AppHeader />
+    <AppShell section="new">
       <main className="mx-auto w-full max-w-3xl px-4 pb-16 sm:px-6">
         <div className="py-8">
           <Link
@@ -78,11 +78,13 @@ export default async function NewTournamentPage() {
           <section className="card p-5 sm:p-6">
             <h2 className="font-semibold text-ink">Formula duga</h2>
             <p className="mt-1 text-sm text-muted">
-              Postavljena je preporučena formula — slobodno je prilagodi ekipi.
-              Sve vrijednosti administratori mogu mijenjati i kasnije, u
-              postavkama lige.
+              Odaberi predložak ili postavi sve ručno — administratori mogu
+              mijenjati formulu i kasnije, u postavkama lige.
             </p>
-            <div className="mt-6">
+            <div className="mt-4">
+              <FormulaPresetPicker initialConfig={DEFAULT_CONFIG} />
+            </div>
+            <div className="mt-6 border-t border-line pt-6">
               <ConfigFields config={DEFAULT_CONFIG} />
             </div>
           </section>
@@ -92,6 +94,6 @@ export default async function NewTournamentPage() {
           </button>
         </form>
       </main>
-    </div>
+    </AppShell>
   );
 }

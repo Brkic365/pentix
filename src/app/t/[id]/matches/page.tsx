@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireMember } from "@/lib/users";
-import { AppHeader } from "@/components/AppHeader";
+import { AppShell } from "@/components/AppShell";
 import { MatchCard } from "@/components/MatchCard";
 import { PHASES, PHASE_LABELS_HR, type PhaseKey } from "@/lib/config";
 
@@ -17,7 +17,7 @@ export default async function MatchesPage({
 }) {
   const { id } = await params;
   const { sve } = await searchParams;
-  await requireMember(id);
+  const { member, tournament } = await requireMember(id);
   const showAll = sve === "1";
 
   const matches = await db.match.findMany({
@@ -34,8 +34,15 @@ export default async function MatchesPage({
   }
 
   return (
-    <div className="min-h-dvh bg-bg">
-      <AppHeader />
+    <AppShell
+      section="league-matches"
+      league={{
+        id,
+        name: tournament.name,
+        mainCountry: tournament.mainCountry,
+        isAdmin: member.role === "ADMIN",
+      }}
+    >
       <main className="mx-auto w-full max-w-3xl px-4 pb-16 sm:px-6">
         <div className="py-8">
           <Link
@@ -82,6 +89,6 @@ export default async function MatchesPage({
           </section>
         ))}
       </main>
-    </div>
+    </AppShell>
   );
 }

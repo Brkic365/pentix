@@ -11,8 +11,9 @@ import {
   updateConfig,
   updateMember,
 } from "@/actions/tournaments";
-import { AppHeader } from "@/components/AppHeader";
+import { AppShell } from "@/components/AppShell";
 import { ConfigFields } from "@/components/ConfigFields";
+import { FormulaPresetPicker } from "@/components/FormulaPresetPicker";
 import { CopyButton } from "@/components/CopyButton";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 
@@ -47,8 +48,15 @@ export default async function SettingsPage({
   const finishTournamentForT = finishTournament.bind(null, id);
 
   return (
-    <div className="min-h-dvh bg-bg">
-      <AppHeader />
+    <AppShell
+      section="league-settings"
+      league={{
+        id,
+        name: tournament.name,
+        mainCountry: tournament.mainCountry,
+        isAdmin: true,
+      }}
+    >
       <main className="mx-auto w-full max-w-3xl px-4 pb-16 sm:px-6">
         <div className="py-8">
           <Link
@@ -114,8 +122,11 @@ export default async function SettingsPage({
               Promjene vrijede od sljedećeg upisanog gola — već nastali dug se
               ne preračunava.
             </p>
-            <form action={updateConfigForT} className="mt-6 space-y-6">
-              <ConfigFields config={cfg} />
+            <form action={updateConfigForT} className="mt-4 space-y-6">
+              <FormulaPresetPicker initialConfig={cfg} />
+              <div className="border-t border-line pt-6">
+                <ConfigFields config={cfg} />
+              </div>
               <button className="btn btn-primary w-full">Spremi formulu</button>
             </form>
           </section>
@@ -213,6 +224,6 @@ export default async function SettingsPage({
           </section>
         </div>
       </main>
-    </div>
+    </AppShell>
   );
 }

@@ -8,7 +8,7 @@ import { deleteLastGoal } from "@/actions/goals";
 import { finishMatch, setMatchTeams, startMatch, toggleTracked } from "@/actions/matches";
 import { respondToBet, resolveBetManually } from "@/actions/bets";
 import { betTermsLabel, type BetTermsKey } from "@/lib/engine/bets";
-import { AppHeader } from "@/components/AppHeader";
+import { AppShell } from "@/components/AppShell";
 import { GoalFastEntry } from "@/components/GoalFastEntry";
 import { LiveScoreSuggestion } from "@/components/LiveScoreSuggestion";
 import { BetCreateForm, type BetTermOption } from "@/components/BetCreateForm";
@@ -105,8 +105,15 @@ export default async function MatchPage({
   const knownScorers = [...new Set(match.goals.map((g) => g.scorerName))].reverse();
 
   return (
-    <div className="min-h-dvh bg-bg">
-      <AppHeader />
+    <AppShell
+      section="league-matches"
+      league={{
+        id,
+        name: tournament.name,
+        mainCountry: tournament.mainCountry,
+        isAdmin,
+      }}
+    >
       <main className="mx-auto w-full max-w-3xl px-4 pb-16 sm:px-6">
         <div className="flex items-center justify-between gap-3 py-6">
           <Link
@@ -481,6 +488,6 @@ export default async function MatchPage({
           )}
         </section>
       </main>
-    </div>
+    </AppShell>
   );
 }

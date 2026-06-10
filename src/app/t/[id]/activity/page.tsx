@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireMember } from "@/lib/users";
 import { formatDateTime } from "@/lib/format";
-import { AppHeader } from "@/components/AppHeader";
+import { AppShell } from "@/components/AppShell";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,7 @@ export default async function ActivityPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  await requireMember(id);
+  const { member, tournament } = await requireMember(id);
 
   const sets = await db.pushupSet.findMany({
     where: { member: { tournamentId: id } },
@@ -24,8 +24,15 @@ export default async function ActivityPage({
   });
 
   return (
-    <div className="min-h-dvh bg-bg">
-      <AppHeader />
+    <AppShell
+      section="league-activity"
+      league={{
+        id,
+        name: tournament.name,
+        mainCountry: tournament.mainCountry,
+        isAdmin: member.role === "ADMIN",
+      }}
+    >
       <main className="mx-auto w-full max-w-3xl px-4 pb-16 sm:px-6">
         <div className="py-8">
           <Link
@@ -87,6 +94,6 @@ export default async function ActivityPage({
           ))}
         </div>
       </main>
-    </div>
+    </AppShell>
   );
 }
