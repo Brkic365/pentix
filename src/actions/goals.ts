@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/users";
 import { parsePentixConfig } from "@/lib/config";
+import { sendPush } from "@/lib/push";
 import {
   computeGoalBase,
   goalSide,
@@ -134,6 +135,18 @@ export async function logGoal(matchId: string, formData: FormData) {
       },
     });
   });
+
+  await sendPush(
+    members
+      .map((m) => ({
+        userId: m.userId,
+        title: `⚽ ${scorerName} ${minute}′ (${scoringTeamName})`,
+        body: `+${memberAccrualAmount(breakdown.base, m.handicapMultiplier)} sklekova za tebe · ${match.tournament.name}`,
+        url: `/t/${match.tournamentId}/match/${matchId}`,
+        tag: `goal-${matchId}`,
+      }))
+      .filter((p) => !p.body.startsWith("+0 ")),
+  );
 
   revalidatePath(`/t/${match.tournamentId}/match/${matchId}`);
   revalidatePath(`/t/${match.tournamentId}`);

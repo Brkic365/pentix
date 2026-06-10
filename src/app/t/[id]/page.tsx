@@ -1,11 +1,14 @@
 import Link from "next/link";
-import { Camera, Settings, Video } from "lucide-react";
+import { BookOpen, Camera, ChartNoAxesColumn, Settings, Video } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireMember } from "@/lib/users";
 import { getLeaderboard } from "@/lib/queries";
 import { parsePentixConfig } from "@/lib/config";
+import { previewDailyInterest } from "@/lib/engine/interest";
 import { formatDate } from "@/lib/format";
+import { leaveTournament } from "@/actions/tournaments";
 import { AppShell } from "@/components/AppShell";
+import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { LiveLeaderboard } from "@/components/LiveLeaderboard";
 import { MatchCard } from "@/components/MatchCard";
 import { TeamFlag } from "@/components/TeamFlag";
@@ -40,6 +43,11 @@ export default async function TournamentPage({
   const me = leaderboard.find((r) => r.memberId === member.id);
   const outstanding = me?.outstanding ?? 0;
   const dailyPct = Math.round(cfg.interest.dailyRate * 1000) / 10;
+  const tomorrowInterest =
+    me && tournament.status === "ACTIVE"
+      ? previewDailyInterest(me, cfg.interest)
+      : 0;
+  const isOwner = member.userId === tournament.ownerId;
 
   return (
     <AppShell
@@ -118,9 +126,9 @@ export default async function TournamentPage({
                 <div className="stat-number mt-1 text-ink">
                   {me?.unpaidInterest ?? 0}
                 </div>
-                {outstanding > 0 && (
+                {tomorrowInterest > 0 && (
                   <div className="mt-1 text-xs font-medium text-danger">
-                    raste +{dailyPct}%/dan
+                    sutra +{tomorrowInterest} ({dailyPct}%/dan)
                   </div>
                 )}
               </div>
@@ -187,6 +195,33 @@ export default async function TournamentPage({
               initialRows={leaderboard}
               myMemberId={member.id}
             />
+
+            {/* quick links — desktop has these in the sidebar */}
+            <div className="mt-4 grid grid-cols-3 gap-2 lg:hidden">
+              <Link href={`/t/${id}/ledger`} className="btn btn-outline py-2.5 text-xs">
+                <BookOpen className="size-4" />
+                Knjižica
+              </Link>
+              <Link href={`/t/${id}/stats`} className="btn btn-outline py-2.5 text-xs">
+                <ChartNoAxesColumn className="size-4" />
+                Statistika
+              </Link>
+              <Link href={`/t/${id}/activity`} className="btn btn-outline py-2.5 text-xs">
+                <Video className="size-4" />
+                Dokazi
+              </Link>
+            </div>
+
+            {!isOwner && (
+              <form action={leaveTournament.bind(null, id)} className="mt-6 text-center">
+                <ConfirmSubmit
+                  message="Napuštaš ligu — tvoja knjižica i setovi se brišu. Nastaviti?"
+                  className="text-xs text-muted underline-offset-2 hover:underline"
+                >
+                  Napusti ligu
+                </ConfirmSubmit>
+              </form>
+            )}
           </div>
         </div>
       </main>

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import {
+  BookOpen,
   Camera,
   CalendarDays,
+  ChartNoAxesColumn,
   Home,
   LayoutGrid,
   Plus,
@@ -13,14 +15,18 @@ import { requireUser } from "@/lib/users";
 import { computeDebt } from "@/lib/engine/interest";
 import { AppHeader } from "@/components/AppHeader";
 import { AuthButton } from "@/components/AuthButton";
+import { NotificationToggle } from "@/components/NotificationToggle";
 import { PentixLogo } from "@/components/PentixLogo";
 import { TeamFlag } from "@/components/TeamFlag";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export type ShellSection =
   | "dashboard"
   | "new"
   | "league-overview"
   | "league-matches"
+  | "league-ledger"
+  | "league-stats"
   | "league-activity"
   | "league-settings";
 
@@ -146,6 +152,18 @@ export async function AppShell({
                   active={section === "league-matches"}
                 />
                 <NavItem
+                  href={`/t/${league.id}/ledger`}
+                  icon={BookOpen}
+                  label="Knjižica"
+                  active={section === "league-ledger"}
+                />
+                <NavItem
+                  href={`/t/${league.id}/stats`}
+                  icon={ChartNoAxesColumn}
+                  label="Statistika"
+                  active={section === "league-stats"}
+                />
+                <NavItem
                   href={`/t/${league.id}/activity`}
                   icon={Video}
                   label="Dokazi"
@@ -201,11 +219,13 @@ export async function AppShell({
           )}
         </nav>
 
-        <div className="flex items-center gap-2.5 border-t border-line p-3">
+        <div className="flex items-center gap-2 border-t border-line p-3">
           <AuthButton />
-          <span className="truncate text-sm font-medium text-ink">
+          <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
             {user.displayName}
           </span>
+          <NotificationToggle />
+          <ThemeToggle />
         </div>
       </aside>
 

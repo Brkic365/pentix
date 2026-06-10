@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { parsePentixConfig } from "@/lib/config";
+import { sendPush, type PushMessage } from "@/lib/push";
 import { computeDailyInterest, computeDebt } from "@/lib/engine/interest";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +39,7 @@ export async function GET(req: Request) {
 
   let membersCharged = 0;
   let totalInterest = 0;
+  const pushQueue: PushMessage[] = [];
 
   for (const t of tournaments) {
     const cfg = parsePentixConfig(t.config);
@@ -63,8 +65,17 @@ export async function GET(req: Request) {
       });
       membersCharged += 1;
       totalInterest += interest;
+      pushQueue.push({
+        userId: m.userId,
+        title: "🩸 Kamata je sjela",
+        body: `+${interest} sklekova (${pct}% na ${outstanding}) · ${t.name}`,
+        url: `/t/${t.id}`,
+        tag: `interest-${t.id}`,
+      });
     }
   }
+
+  await sendPush(pushQueue);
 
   return NextResponse.json({ ok: true, membersCharged, totalInterest });
 }

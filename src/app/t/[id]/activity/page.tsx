@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Flag } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireMember } from "@/lib/users";
 import { formatDateTime } from "@/lib/format";
+import { toggleSetFlag } from "@/actions/flags";
 import { AppShell } from "@/components/AppShell";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +19,10 @@ export default async function ActivityPage({
 
   const sets = await db.pushupSet.findMany({
     where: { member: { tournamentId: id } },
-    include: { member: { include: { user: true } } },
+    include: {
+      member: { include: { user: true } },
+      flags: { select: { memberId: true } },
+    },
     orderBy: { createdAt: "desc" },
     take: 50,
   });
@@ -57,12 +61,22 @@ export default async function ActivityPage({
         )}
 
         <div className="space-y-3">
-          {sets.map((s) => (
+          {sets.map((s) => {
+            const flaggedByMe = s.flags.some((f) => f.memberId === member.id);
+            return (
             <article key={s.id} className="card p-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="truncate font-medium text-ink">
-                    {s.member.user.displayName}
+                  <div className="flex items-center gap-2">
+                    <span className="truncate font-medium text-ink">
+                      {s.member.user.displayName}
+                    </span>
+                    {s.flags.length > 0 && (
+                      <span className="badge badge-amber">
+                        <Flag className="size-3" />
+                        {s.flags.length}
+                      </span>
+                    )}
                   </div>
                   <div className="mt-0.5 text-xs text-muted">
                     {formatDateTime(s.createdAt)} · kamera izbrojala {s.cvReps} ·
@@ -70,11 +84,26 @@ export default async function ActivityPage({
                     {s.reps !== s.cvReps && " · ručno ispravljeno"}
                   </div>
                 </div>
-                <div className="shrink-0 text-right">
-                  <div className="text-xl font-semibold tabular-nums text-primary">
-                    −{s.reps}
+                <div className="flex shrink-0 items-center gap-2">
+                  {s.memberId !== member.id && (
+                    <form action={toggleSetFlag.bind(null, s.id)}>
+                      <button
+                        title={flaggedByMe ? "Povuci prijavu" : "Prijavi sumnjiv set"}
+                        aria-label={flaggedByMe ? "Povuci prijavu" : "Prijavi sumnjiv set"}
+                        className={`btn px-2 py-1.5 ${
+                          flaggedByMe ? "btn-danger-outline" : "btn-ghost"
+                        }`}
+                      >
+                        <Flag className="size-4" />
+                      </button>
+                    </form>
+                  )}
+                  <div className="text-right">
+                    <div className="text-xl font-semibold tabular-nums text-primary">
+                      −{s.reps}
+                    </div>
+                    <div className="text-[11px] text-muted">duga</div>
                   </div>
-                  <div className="text-[11px] text-muted">duga</div>
                 </div>
               </div>
               {s.videoUrl ? (
@@ -91,7 +120,8 @@ export default async function ActivityPage({
                 </p>
               )}
             </article>
-          ))}
+            );
+          })}
         </div>
       </main>
     </AppShell>

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   computeDailyInterest,
   computeDebt,
+  previewDailyInterest,
   type LedgerEntryLike,
 } from "./interest";
 
@@ -133,5 +134,22 @@ describe("computeDailyInterest", () => {
     expect(computeDailyInterest(e, { dailyRate: 0.1, capMultiplier: 2 })).toBe(10);
     const maxed = [entry("ACCRUAL", 100, day(1)), entry("INTEREST", 100, day(2))];
     expect(computeDailyInterest(maxed, { dailyRate: 0.1, capMultiplier: 2 })).toBe(0);
+  });
+
+  it("previewDailyInterest matches the charge computed from raw entries", () => {
+    const e = [
+      entry("ACCRUAL", 101, day(1)),
+      entry("PAYMENT", 20, day(2)),
+      entry("INTEREST", 4, day(3)),
+    ];
+    expect(previewDailyInterest(computeDebt(e), INTEREST_CFG)).toBe(
+      computeDailyInterest(e, INTEREST_CFG),
+    );
+    expect(
+      previewDailyInterest(
+        { outstanding: 0, lifetimePrincipal: 100, lifetimeInterest: 0 },
+        INTEREST_CFG,
+      ),
+    ).toBe(0);
   });
 });

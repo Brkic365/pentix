@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/users";
 import { parsePentixConfig } from "@/lib/config";
+import { sendPush, type PushMessage } from "@/lib/push";
 import { shootoutAmount } from "@/lib/engine/accrual";
 import { betOutcome, betTermsLabel, type BetTermsKey } from "@/lib/engine/bets";
 
@@ -108,6 +109,8 @@ export async function finishMatch(matchId: string, formData: FormData) {
   const members = await db.member.findMany({
     where: { tournamentId: match.tournamentId },
   });
+  const pushQueue: PushMessage[] = [];
+  const matchUrl = `/t/${match.tournamentId}/match/${matchId}`;
 
   await db.$transaction(async (tx) => {
     await tx.match.update({
@@ -138,6 +141,18 @@ export async function finishMatch(matchId: string, formData: FormData) {
         }))
         .filter((e) => e.amount > 0);
       if (entries.length > 0) await tx.ledgerEntry.createMany({ data: entries });
+      for (const m of members) {
+        const amount = shootoutAmount(cfg, shootoutMisses, m.handicapMultiplier);
+        if (amount > 0) {
+          pushQueue.push({
+            userId: m.userId,
+            title: "🥅 Otišlo je na jedanaesterce",
+            body: `+${amount} sklekova za tebe · ${match.tournament.name}`,
+            url: matchUrl,
+            tag: `shootout-${matchId}`,
+          });
+        }
+      }
     }
 
     // Bets: resolve ACCEPTED where possible, expire still-PROPOSED ones
@@ -179,8 +194,23 @@ export async function finishMatch(matchId: string, formData: FormData) {
           )}"`,
         },
       });
+      pushQueue.push(
+        {
+          userId: loser.userId,
+          title: "🎲 Izgubio si okladu",
+          body: `+${bet.stakeReps} sklekova — protiv ${winner.user.displayName}`,
+          url: matchUrl,
+        },
+        {
+          userId: winner.userId,
+          title: "🎲 Dobio si okladu",
+          body: `${loser.user.displayName} ti duguje ${bet.stakeReps} sklekova više`,
+          url: matchUrl,
+        },
+      );
     }
   });
 
+  await sendPush(pushQueue);
   revalidateMatch(match.tournamentId, matchId);
 }

@@ -38,9 +38,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Applies the saved theme before first paint (pairs with ThemeToggle)
+  const themeScript = `(function(){try{var t=localStorage.getItem("pentix-theme");if(t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme: dark)").matches)){document.documentElement.classList.add("dark")}}catch(e){}})()`;
+
   const page = (
-    <html lang="hr">
-      <body className={`${inter.variable} antialiased`}>{children}</body>
+    <html lang="hr" suppressHydrationWarning>
+      <body className={`${inter.variable} antialiased`}>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {children}
+      </body>
     </html>
   );
 

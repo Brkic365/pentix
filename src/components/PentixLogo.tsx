@@ -25,7 +25,7 @@ export function PentixMark({
         fontFamily="var(--font-inter), system-ui, sans-serif"
         fontWeight="700"
         fontSize="52"
-        fill="#ffffff"
+        fill="var(--primary-fg, #ffffff)"
       >
         5
       </text>

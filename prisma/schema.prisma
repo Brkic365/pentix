@@ -63,13 +63,27 @@ enum BetTerms {
 }
 
 model User {
-  id               String       @id @default(cuid())
-  clerkId          String       @unique
-  displayName      String
-  avatarUrl        String?
-  createdAt        DateTime     @default(now())
-  memberships      Member[]
-  ownedTournaments Tournament[] @relation("TournamentOwner")
+  id                String             @id @default(cuid())
+  clerkId           String             @unique
+  displayName       String
+  avatarUrl         String?
+  createdAt         DateTime           @default(now())
+  memberships       Member[]
+  ownedTournaments  Tournament[]       @relation("TournamentOwner")
+  pushSubscriptions PushSubscription[]
+}
+
+// Web-push endpoint of one browser/device for one user.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // ── World Cup reference data (seeded once, shared by all tournaments) ────────
@@ -152,6 +166,7 @@ model Member {
   proposedBets       Bet[]         @relation("BetProposer")
   receivedBets       Bet[]         @relation("BetOpponent")
   wonBets            Bet[]         @relation("BetWinner")
+  setFlags           SetFlag[]
 
   @@unique([userId, tournamentId])
 }
@@ -233,6 +248,19 @@ model PushupSet {
   videoUrl     String? // R2 public URL (null if the clip upload failed)
   createdAt    DateTime     @default(now())
   ledgerEntry  LedgerEntry?
+  flags        SetFlag[]
+}
+
+// Crew anti-cheat: a member marking a recorded set as suspicious.
+model SetFlag {
+  id          String    @id @default(cuid())
+  pushupSetId String
+  pushupSet   PushupSet @relation(fields: [pushupSetId], references: [id], onDelete: Cascade)
+  memberId    String
+  member      Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([pushupSetId, memberId])
 }
 
 model Bet {

@@ -88,7 +88,18 @@ export function computeDailyInterest(
   entries: LedgerEntryLike[],
   cfg: InterestConfigLike,
 ): number {
-  const { outstanding, lifetimePrincipal, lifetimeInterest } = computeDebt(entries);
+  return previewDailyInterest(computeDebt(entries), cfg);
+}
+
+/** Same charge, computed from an existing breakdown — "sutra: +X" UI hints. */
+export function previewDailyInterest(
+  breakdown: Pick<
+    DebtBreakdown,
+    "outstanding" | "lifetimePrincipal" | "lifetimeInterest"
+  >,
+  cfg: InterestConfigLike,
+): number {
+  const { outstanding, lifetimePrincipal, lifetimeInterest } = breakdown;
   if (outstanding <= 0) return 0;
 
   const uncapped = Math.ceil(outstanding * cfg.dailyRate);

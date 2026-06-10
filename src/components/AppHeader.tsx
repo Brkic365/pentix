@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { PentixLogo } from "@/components/PentixLogo";
 import { AuthButton } from "@/components/AuthButton";
+import { NotificationToggle } from "@/components/NotificationToggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
-/** Shared top bar for signed-in app pages. */
+/** Compact top bar for mobile (desktop uses the AppShell sidebar). */
 export function AppHeader({ right }: { right?: React.ReactNode }) {
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-card">
@@ -10,8 +12,10 @@ export function AppHeader({ right }: { right?: React.ReactNode }) {
         <Link href="/dashboard" aria-label="Pentix — početna">
           <PentixLogo size={26} />
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5">
           {right}
+          <NotificationToggle />
+          <ThemeToggle />
           <AuthButton />
         </div>
       </div>

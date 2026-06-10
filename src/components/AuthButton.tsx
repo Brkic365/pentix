@@ -7,7 +7,7 @@ export function AuthButton() {
     return (
       <span
         title="Dev korisnik (DEV_AUTH_BYPASS)"
-        className="flex size-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white"
+        className="flex size-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-fg"
       >
         A
       </span>

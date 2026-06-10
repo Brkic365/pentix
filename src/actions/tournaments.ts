@@ -3,10 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { requireAdmin, requireUser } from "@/lib/users";
+import { requireAdmin, requireMember, requireUser } from "@/lib/users";
 import { generateInviteCode } from "@/lib/invite";
 import { DEFAULT_CONFIG, parsePentixConfig } from "@/lib/config";
 import { hasConfigFields, parseConfigFormData } from "@/lib/configForm";
+import { sendPush } from "@/lib/push";
 import { eliminationAmount, topThreeAmount } from "@/lib/engine/accrual";
 
 const HANDICAP_MIN = 0.5;
@@ -143,6 +144,33 @@ export async function updateMember(tournamentId: string, formData: FormData) {
   revalidatePath(`/t/${tournamentId}/settings`);
 }
 
+/**
+ * Admin removes a member. Destructive: their ledger, sets and bets go with
+ * them (DB cascade). The owner can never be removed.
+ */
+export async function removeMember(tournamentId: string, formData: FormData) {
+  const { tournament } = await requireAdmin(tournamentId);
+  const memberId = String(formData.get("memberId"));
+  const target = await db.member.findUnique({ where: { id: memberId } });
+  if (!target || target.tournamentId !== tournamentId) return;
+  if (target.userId === tournament.ownerId) {
+    throw new Error("Vlasnika lige nije moguće ukloniti.");
+  }
+  await db.member.delete({ where: { id: memberId } });
+  revalidatePath(`/t/${tournamentId}/settings`);
+  revalidatePath(`/t/${tournamentId}`);
+}
+
+/** Leave a league you're a member of. The owner stays until the bitter end. */
+export async function leaveTournament(tournamentId: string) {
+  const { user, member, tournament } = await requireMember(tournamentId);
+  if (user.id === tournament.ownerId) {
+    throw new Error("Vlasnik ne može napustiti vlastitu ligu.");
+  }
+  await db.member.delete({ where: { id: member.id } });
+  redirect("/dashboard");
+}
+
 export async function regenerateInvite(tournamentId: string) {
   await requireAdmin(tournamentId);
   await db.tournament.update({
@@ -182,6 +210,16 @@ export async function applyElimination(tournamentId: string) {
       })),
     });
   });
+
+  await sendPush(
+    members.map((m) => ({
+      userId: m.userId,
+      title: `💀 ${tournament.mainCountry.name} je ispala`,
+      body: `+${eliminationAmount(cfg, m.handicapMultiplier)} sklekova za tebe · ${tournament.name}`,
+      url: `/t/${tournamentId}`,
+    })),
+  );
+
   revalidatePath(`/t/${tournamentId}`);
   revalidatePath(`/t/${tournamentId}/settings`);
 }

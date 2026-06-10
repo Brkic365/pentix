@@ -28,6 +28,7 @@
     "next": "15.5.19",
     "react": "~19.1.4",
     "react-dom": "~19.1.4",
+    "web-push": "^3.6.7",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -36,6 +37,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "csv-parse": "^6.2.1",
     "embedded-postgres": "^18.4.0-beta.17",
     "eslint": "^9",

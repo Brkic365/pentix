@@ -7,6 +7,7 @@ import {
   applyElimination,
   finishTournament,
   regenerateInvite,
+  removeMember,
   setMainCountry,
   updateConfig,
   updateMember,
@@ -43,6 +44,7 @@ export default async function SettingsPage({
   const updateConfigForT = updateConfig.bind(null, id);
   const setMainCountryForT = setMainCountry.bind(null, id);
   const updateMemberForT = updateMember.bind(null, id);
+  const removeMemberForT = removeMember.bind(null, id);
   const regenerateInviteForT = regenerateInvite.bind(null, id);
   const applyEliminationForT = applyElimination.bind(null, id);
   const finishTournamentForT = finishTournament.bind(null, id);
@@ -139,43 +141,64 @@ export default async function SettingsPage({
               Orijentir: rekreativac 1.0 · fit 1.2 · zvijer 1.5 (najviše 2.0).
             </p>
             <div className="mt-4 space-y-2">
-              {members.map((m) => (
-                <form
-                  key={m.id}
-                  action={updateMemberForT}
-                  className="flex items-center gap-2 rounded-lg border border-line bg-card-subtle p-3"
-                >
-                  <input type="hidden" name="memberId" value={m.id} />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-ink">
-                      {m.user.displayName}
-                    </div>
-                    <div className="text-xs text-muted">
-                      član od {new Date(m.joinedAt).toLocaleDateString("hr-HR")}
-                    </div>
-                  </div>
-                  <input
-                    name="handicapMultiplier"
-                    type="number"
-                    step="0.1"
-                    min="0.5"
-                    max="2"
-                    defaultValue={m.handicapMultiplier}
-                    className="input w-20 text-center"
-                    aria-label="Handicap"
-                  />
-                  <select
-                    name="role"
-                    defaultValue={m.role}
-                    className="input w-auto"
-                    aria-label="Uloga"
+              {members.map((m) => {
+                const isOwner = m.userId === tournament.ownerId;
+                return (
+                  <div
+                    key={m.id}
+                    className="flex items-center gap-2 rounded-lg border border-line bg-card-subtle p-3"
                   >
-                    <option value="PLAYER">Igrač</option>
-                    <option value="ADMIN">Admin</option>
-                  </select>
-                  <button className="btn btn-outline px-3 py-2">Spremi</button>
-                </form>
-              ))}
+                    <form
+                      action={updateMemberForT}
+                      className="flex min-w-0 flex-1 items-center gap-2"
+                    >
+                      <input type="hidden" name="memberId" value={m.id} />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-medium text-ink">
+                          {m.user.displayName}
+                          {isOwner && (
+                            <span className="ml-1.5 text-xs text-muted">vlasnik</span>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted">
+                          član od {new Date(m.joinedAt).toLocaleDateString("hr-HR")}
+                        </div>
+                      </div>
+                      <input
+                        name="handicapMultiplier"
+                        type="number"
+                        step="0.1"
+                        min="0.5"
+                        max="2"
+                        defaultValue={m.handicapMultiplier}
+                        className="input w-20 text-center"
+                        aria-label="Handicap"
+                      />
+                      <select
+                        name="role"
+                        defaultValue={m.role}
+                        className="input w-auto"
+                        aria-label="Uloga"
+                      >
+                        <option value="PLAYER">Igrač</option>
+                        <option value="ADMIN">Admin</option>
+                      </select>
+                      <button className="btn btn-outline px-3 py-2">Spremi</button>
+                    </form>
+                    {!isOwner && (
+                      <form action={removeMemberForT}>
+                        <input type="hidden" name="memberId" value={m.id} />
+                        <ConfirmSubmit
+                          message={`Uklanjaš ${m.user.displayName} iz lige — briše se i sva povijest duga. Nastaviti?`}
+                          className="btn btn-danger-outline px-2.5 py-2 text-xs"
+                        >
+                          Ukloni
+                        </ConfirmSubmit>
+                      </form>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </section>
 

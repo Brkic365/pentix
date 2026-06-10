@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdmin, requireMember } from "@/lib/users";
+import { sendPush } from "@/lib/push";
 import { betTermsLabel, type BetTermsKey } from "@/lib/engine/bets";
 
 const TERMS: BetTermsKey[] = [
@@ -23,7 +24,7 @@ export async function proposeBet(matchId: string, formData: FormData) {
     where: { id: matchId },
     include: { tournament: true },
   });
-  const { member: me } = await requireMember(match.tournamentId);
+  const { member: me, user: meUser } = await requireMember(match.tournamentId);
 
   if (match.status === "FINISHED") throw new Error("Utakmica je gotova — kasno je.");
   if (match.tournament.status !== "ACTIVE") throw new Error("Turnir nije aktivan.");
@@ -62,16 +63,39 @@ export async function proposeBet(matchId: string, formData: FormData) {
       customText: terms === "CUSTOM" ? customText : null,
     },
   });
+
+  await sendPush([
+    {
+      userId: opponent.userId,
+      title: "🎲 Novi izazov",
+      body: `${meUser.displayName} te izaziva za ${stakeReps} sklekova`,
+      url: `/t/${match.tournamentId}/match/${matchId}`,
+    },
+  ]);
+
   revalidatePath(`/t/${match.tournamentId}/match/${matchId}`);
+}
+
+/** Proposer withdraws a bet the opponent hasn't answered yet. */
+export async function cancelBet(betId: string) {
+  const bet = await db.bet.findUniqueOrThrow({
+    where: { id: betId },
+    include: { match: true },
+  });
+  const { member: me } = await requireMember(bet.match.tournamentId);
+  if (bet.proposerMemberId !== me.id) throw new Error("Nije tvoja oklada.");
+  if (bet.status !== "PROPOSED") return;
+  await db.bet.delete({ where: { id: betId } });
+  revalidatePath(`/t/${bet.match.tournamentId}/match/${bet.matchId}`);
 }
 
 export async function respondToBet(betId: string, formData: FormData) {
   const accept = formData.get("response") === "accept";
   const bet = await db.bet.findUniqueOrThrow({
     where: { id: betId },
-    include: { match: true },
+    include: { match: true, proposer: true },
   });
-  const { member: me } = await requireMember(bet.match.tournamentId);
+  const { member: me, user: meUser } = await requireMember(bet.match.tournamentId);
 
   if (bet.opponentMemberId !== me.id) throw new Error("Ova oklada nije za tebe.");
   if (bet.status !== "PROPOSED") return;
@@ -81,6 +105,16 @@ export async function respondToBet(betId: string, formData: FormData) {
     where: { id: betId },
     data: { status: accept ? "ACCEPTED" : "DECLINED" },
   });
+
+  await sendPush([
+    {
+      userId: bet.proposer.userId,
+      title: accept ? "🎲 Oklada prihvaćena" : "🎲 Oklada odbijena",
+      body: `${meUser.displayName} je ${accept ? "prihvatio izazov — ulog " + bet.stakeReps : "odbio tvoj izazov"}`,
+      url: `/t/${bet.match.tournamentId}/match/${bet.matchId}`,
+    },
+  ]);
+
   revalidatePath(`/t/${bet.match.tournamentId}/match/${bet.matchId}`);
 }
 
@@ -130,5 +164,22 @@ export async function resolveBetManually(betId: string, formData: FormData) {
       },
     }),
   ]);
+
+  const url = `/t/${bet.match.tournamentId}/match/${bet.matchId}`;
+  await sendPush([
+    {
+      userId: loser.userId,
+      title: "🎲 Izgubio si okladu",
+      body: `+${bet.stakeReps} sklekova — protiv ${winner.user.displayName}`,
+      url,
+    },
+    {
+      userId: winner.userId,
+      title: "🎲 Dobio si okladu",
+      body: `${loser.user.displayName} ti duguje ${bet.stakeReps} sklekova više`,
+      url,
+    },
+  ]);
+
   revalidatePath(`/t/${bet.match.tournamentId}/match/${bet.matchId}`);
 }

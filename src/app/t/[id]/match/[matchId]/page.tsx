@@ -6,7 +6,7 @@ import { parsePentixConfig, PHASE_LABELS_HR, type PhaseKey } from "@/lib/config"
 import { formatKickoff } from "@/lib/format";
 import { deleteLastGoal } from "@/actions/goals";
 import { finishMatch, setMatchTeams, startMatch, toggleTracked } from "@/actions/matches";
-import { respondToBet, resolveBetManually } from "@/actions/bets";
+import { cancelBet, respondToBet, resolveBetManually } from "@/actions/bets";
 import { betTermsLabel, type BetTermsKey } from "@/lib/engine/bets";
 import { AppShell } from "@/components/AppShell";
 import { GoalFastEntry } from "@/components/GoalFastEntry";
@@ -434,6 +434,16 @@ export default async function MatchPage({
                         </span>
                       )}
                     </div>
+
+                    {b.proposerMemberId === member.id &&
+                      b.status === "PROPOSED" &&
+                      match.status !== "FINISHED" && (
+                        <form action={cancelBet.bind(null, b.id)} className="mt-2.5">
+                          <button className="btn btn-ghost border border-line py-1.5 text-xs">
+                            Povuci izazov
+                          </button>
+                        </form>
+                      )}
 
                     {mine && b.status === "PROPOSED" && match.status !== "FINISHED" && (
                       <div className="mt-2.5 flex gap-2">
