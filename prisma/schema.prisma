@@ -1,0 +1,254 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum TournamentStatus {
+  DRAFT
+  ACTIVE
+  FINISHED
+}
+
+enum MemberRole {
+  ADMIN
+  PLAYER
+}
+
+enum Phase {
+  GROUP
+  R32
+  R16
+  QF
+  SF
+  THIRD
+  FINAL
+}
+
+enum MatchStatus {
+  UPCOMING
+  LIVE
+  FINISHED
+}
+
+enum LedgerType {
+  ACCRUAL
+  PAYMENT
+  BET
+  INTEREST
+}
+
+enum BetStatus {
+  PROPOSED
+  ACCEPTED
+  DECLINED
+  RESOLVED
+}
+
+// Proposer claims the statement is true; if it holds at full time the proposer
+// wins, otherwise the opponent does. CUSTOM bets are resolved manually.
+enum BetTerms {
+  MAIN_WIN
+  MAIN_NOT_WIN
+  HOME_WIN
+  AWAY_WIN
+  DRAW
+  OVER_2_5
+  UNDER_2_5
+  CUSTOM
+}
+
+model User {
+  id               String       @id @default(cuid())
+  clerkId          String       @unique
+  displayName      String
+  avatarUrl        String?
+  createdAt        DateTime     @default(now())
+  memberships      Member[]
+  ownedTournaments Tournament[] @relation("TournamentOwner")
+}
+
+// ── World Cup reference data (seeded once, shared by all tournaments) ────────
+
+model Team {
+  id                  Int             @id // dataset team id (1..48)
+  name                String
+  fifaCode            String
+  iso2                String?
+  flagUrl             String?
+  groupLetter         String?
+  homeTemplateMatches TemplateMatch[] @relation("TemplateHome")
+  awayTemplateMatches TemplateMatch[] @relation("TemplateAway")
+  homeMatches         Match[]         @relation("MatchHome")
+  awayMatches         Match[]         @relation("MatchAway")
+  mainForTournaments  Tournament[]
+}
+
+model Stadium {
+  id              Int             @id
+  name            String
+  city            String
+  country         String
+  capacity        Int?
+  templateMatches TemplateMatch[]
+  matches         Match[]
+}
+
+// Official schedule template (104 matches). Copied into per-tournament Match
+// rows when a tournament is created. Knockout teams stay null until known.
+model TemplateMatch {
+  id          Int      @id // official match number 1..104
+  phase       Phase
+  homeTeamId  Int?
+  awayTeamId  Int?
+  homeSlot    String? // placeholder label when team unknown ("TBD", "Pobjednik 73", …)
+  awaySlot    String?
+  kickoff     DateTime
+  stadiumId   Int?
+  groupLetter String?
+  matchday    Int?
+  homeTeam    Team?    @relation("TemplateHome", fields: [homeTeamId], references: [id])
+  awayTeam    Team?    @relation("TemplateAway", fields: [awayTeamId], references: [id])
+  stadium     Stadium? @relation(fields: [stadiumId], references: [id])
+}
+
+// ── Pentix domain ────────────────────────────────────────────────────────────
+
+model Tournament {
+  id             String           @id @default(cuid())
+  name           String
+  mainCountryId  Int
+  mainCountry    Team             @relation(fields: [mainCountryId], references: [id])
+  config         Json
+  ownerId        String
+  owner          User             @relation("TournamentOwner", fields: [ownerId], references: [id])
+  status         TournamentStatus @default(DRAFT)
+  inviteCode     String           @unique
+  // set when the elimination penalty has been applied — guards double charging
+  eliminatedAt   DateTime?
+  // mainCountry's final placement (1/2/3), recorded when the tournament finishes
+  finalPlacement Int?
+  createdAt      DateTime         @default(now())
+  members        Member[]
+  matches        Match[]
+}
+
+model Member {
+  id                 String        @id @default(cuid())
+  userId             String
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tournamentId       String
+  tournament         Tournament    @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  // scales ACCRUAL only — payments are always 1:1, bets are flat
+  handicapMultiplier Float         @default(1.0)
+  role               MemberRole    @default(PLAYER)
+  joinedAt           DateTime      @default(now())
+  ledgerEntries      LedgerEntry[]
+  pushupSets         PushupSet[]
+  proposedBets       Bet[]         @relation("BetProposer")
+  receivedBets       Bet[]         @relation("BetOpponent")
+  wonBets            Bet[]         @relation("BetWinner")
+
+  @@unique([userId, tournamentId])
+}
+
+model Match {
+  id              String      @id @default(cuid())
+  tournamentId    String
+  tournament      Tournament  @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  templateMatchId Int? // official match number this row was copied from
+  phase           Phase
+  homeTeamId      Int?
+  homeTeam        Team?       @relation("MatchHome", fields: [homeTeamId], references: [id])
+  awayTeamId      Int?
+  awayTeam        Team?       @relation("MatchAway", fields: [awayTeamId], references: [id])
+  homeSlot        String?
+  awaySlot        String?
+  kickoff         DateTime
+  stadiumId       Int?
+  stadium         Stadium?    @relation(fields: [stadiumId], references: [id])
+  status          MatchStatus @default(UPCOMING)
+  homeScore       Int         @default(0)
+  awayScore       Int         @default(0)
+  // whether goals in this match generate debt for this tournament
+  isTracked       Boolean     @default(false)
+  groupLetter     String?
+  wentToShootout  Boolean     @default(false)
+  homePens        Int?
+  awayPens        Int?
+  goals           Goal[]
+  bets            Bet[]
+
+  @@unique([tournamentId, templateMatchId])
+  @@index([tournamentId, kickoff])
+}
+
+model Goal {
+  id                  String        @id @default(cuid())
+  matchId             String
+  match               Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  scoringTeamId       Int // team credited with the goal (whose score went up)
+  scorerName          String
+  minute              Int
+  isPenalty           Boolean       @default(false)
+  isOwnGoal           Boolean       @default(false)
+  isLate              Boolean       @default(false) // ≥85' or stoppage time
+  nthGoalBySamePlayer Int           @default(1) // for the hat-trick rule
+  createdAt           DateTime      @default(now())
+  ledgerEntries       LedgerEntry[]
+}
+
+model LedgerEntry {
+  id          String     @id @default(cuid())
+  memberId    String
+  member      Member     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  // whole pushups. ACCRUAL/BET/INTEREST add debt, PAYMENT removes it:
+  // outstanding = max(0, Σ(ACCRUAL+BET+INTEREST) − Σ(PAYMENT))
+  amount      Int
+  type        LedgerType
+  reason      String
+  goalId      String?
+  goal        Goal?      @relation(fields: [goalId], references: [id], onDelete: SetNull)
+  betId       String?
+  bet         Bet?       @relation(fields: [betId], references: [id], onDelete: SetNull)
+  pushupSetId String?    @unique
+  pushupSet   PushupSet? @relation(fields: [pushupSetId], references: [id], onDelete: SetNull)
+  createdAt   DateTime   @default(now())
+
+  @@index([memberId, createdAt])
+  @@index([type, createdAt])
+}
+
+model PushupSet {
+  id           String       @id @default(cuid())
+  memberId     String
+  member       Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  reps         Int // human-confirmed count → the PAYMENT amount
+  cvReps       Int // what the CV counter saw
+  cvConfidence Float // mean pose visibility 0..1 across counted reps
+  videoUrl     String? // R2 public URL (null if the clip upload failed)
+  createdAt    DateTime     @default(now())
+  ledgerEntry  LedgerEntry?
+}
+
+model Bet {
+  id               String        @id @default(cuid())
+  matchId          String
+  match            Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  proposerMemberId String
+  proposer         Member        @relation("BetProposer", fields: [proposerMemberId], references: [id], onDelete: Cascade)
+  opponentMemberId String
+  opponent         Member        @relation("BetOpponent", fields: [opponentMemberId], references: [id], onDelete: Cascade)
+  stakeReps        Int // flat — never scaled by handicap
+  terms            BetTerms
+  customText       String?
+  status           BetStatus     @default(PROPOSED)
+  winnerMemberId   String?
+  winner           Member?       @relation("BetWinner", fields: [winnerMemberId], references: [id])
+  createdAt        DateTime      @default(now())
+  ledgerEntries    LedgerEntry[]
+}
