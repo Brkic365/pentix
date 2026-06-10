@@ -137,9 +137,14 @@ export default async function TournamentPage({
       <section className="mt-8">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-xl">UTAKMICE</h2>
-          <Link href={`/t/${id}/matches`} className="text-sm text-volt">
-            sve →
-          </Link>
+          <span className="flex items-center gap-3 text-sm">
+            <Link href={`/t/${id}/activity`} className="text-muted">
+              📺 dokazi
+            </Link>
+            <Link href={`/t/${id}/matches`} className="text-volt">
+              sve →
+            </Link>
+          </span>
         </div>
         <div className="mt-3 space-y-2">
           {liveMatches.map((m) => (
