@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
+import { AuthButton } from "@/components/AuthButton";
 import { db } from "@/lib/db";
 import { requireMember } from "@/lib/users";
 import { getLeaderboard } from "@/lib/queries";
@@ -72,7 +72,7 @@ export default async function TournamentPage({
               ⚙️
             </Link>
           )}
-          <UserButton />
+          <AuthButton />
         </div>
       </header>
 

@@ -22,6 +22,19 @@ function readCsv(file: string): Record<string, string>[] {
   });
 }
 
+/**
+ * The dataset's wikimedia flag URLs started returning 400s, so flags come
+ * from flagcdn.com keyed by ISO code (gb-eng/gb-sct for the home nations).
+ */
+function flagFromIso(iso2: string | null): string | null {
+  if (!iso2) return null;
+  const special: Record<string, string> = { ENG: "gb-eng", SCO: "gb-sct" };
+  const code =
+    special[iso2.toUpperCase()] ??
+    (iso2.length === 2 ? iso2.toLowerCase() : null);
+  return code ? `https://flagcdn.com/w160/${code}.png` : null;
+}
+
 async function seedTeams() {
   const rows = readCsv("worldcup2026.teams.csv");
   const patchFile = JSON.parse(
@@ -36,11 +49,12 @@ async function seedTeams() {
   for (const row of rows) {
     const id = Number(row.id);
     const patch = patchFile.patches[String(id)] ?? {};
+    const iso2 = patch.iso2 ?? (row.iso2 === "TBD" ? null : row.iso2 || null);
     const data = {
       name: patch.name ?? row.name_en,
       fifaCode: patch.fifaCode ?? row.fifa_code,
-      iso2: patch.iso2 ?? (row.iso2 === "TBD" ? null : row.iso2 || null),
-      flagUrl: patch.flagUrl ?? (row.flag || null),
+      iso2,
+      flagUrl: patch.flagUrl ?? flagFromIso(iso2) ?? (row.flag || null),
       groupLetter: row.groups || null,
     };
     await prisma.team.upsert({ where: { id }, create: { id, ...data }, update: data });

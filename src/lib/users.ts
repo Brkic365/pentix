@@ -1,17 +1,26 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import { devAuthEnabled, getClerkId } from "@/lib/auth";
 
 /**
  * Returns the local User row for the signed-in Clerk user, creating/refreshing
  * it on first contact. Redirects to sign-in when unauthenticated.
  */
 export async function requireUser() {
-  const { userId: clerkId } = await auth();
+  const clerkId = await getClerkId();
   if (!clerkId) redirect("/sign-in");
 
   const existing = await db.user.findUnique({ where: { clerkId } });
   if (existing) return existing;
+
+  if (devAuthEnabled()) {
+    return db.user.upsert({
+      where: { clerkId },
+      update: {},
+      create: { clerkId, displayName: "Antonio (dev)" },
+    });
+  }
 
   const cu = await currentUser();
   const displayName =

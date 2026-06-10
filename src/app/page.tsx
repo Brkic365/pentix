@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
+import { getClerkId } from "@/lib/auth";
 import { PentixLogo, PentixMark } from "@/components/PentixLogo";
 
 export default async function LandingPage() {
-  const { userId } = await auth();
+  const userId = await getClerkId();
   if (userId) redirect("/dashboard");
 
   return (

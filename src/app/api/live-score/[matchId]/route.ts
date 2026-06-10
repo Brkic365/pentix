@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
+import { getClerkId } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,7 @@ export async function GET(
   const base = process.env.WC_API_BASE;
   if (!base) return NextResponse.json({ available: false, reason: "disabled" });
 
-  const { userId: clerkId } = await auth();
+  const clerkId = await getClerkId();
   if (!clerkId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const match = await db.match.findUnique({

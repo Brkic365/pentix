@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
-import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
+import { getClerkId } from "@/lib/auth";
 import { presignClipUpload, publicClipUrl, r2Configured } from "@/lib/r2";
 
 const EXT_BY_TYPE: Record<string, string> = {
@@ -10,7 +10,7 @@ const EXT_BY_TYPE: Record<string, string> = {
 };
 
 export async function POST(req: Request) {
-  const { userId: clerkId } = await auth();
+  const clerkId = await getClerkId();
   if (!clerkId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   if (!r2Configured()) {

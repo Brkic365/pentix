@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
+import { AuthButton } from "@/components/AuthButton";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/users";
 import { computeDebt } from "@/lib/engine/interest";
@@ -33,7 +33,7 @@ export default async function DashboardPage({
     <main className="mx-auto min-h-dvh w-full max-w-lg px-5 pb-16">
       <header className="flex items-center justify-between py-4">
         <PentixLogo size={28} />
-        <UserButton />
+        <AuthButton />
       </header>
 
       <h1 className="font-display mt-2 text-3xl">TVOJE LIGE</h1>

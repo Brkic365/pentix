@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Anton, Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { hrHR } from "@clerk/localizations";
+import { devAuthEnabled } from "@/lib/auth";
 import "./globals.css";
 
 const anton = Anton({
@@ -43,6 +44,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const page = (
+    <html lang="hr">
+      <body className={`${anton.variable} ${inter.variable} antialiased`}>
+        {children}
+      </body>
+    </html>
+  );
+
+  // DEV_AUTH_BYPASS: local demo without Clerk (see src/lib/auth.ts)
+  if (devAuthEnabled()) return page;
+
   return (
     <ClerkProvider
       localization={hrHR}
@@ -58,11 +70,7 @@ export default function RootLayout({
         },
       }}
     >
-      <html lang="hr">
-        <body className={`${anton.variable} ${inter.variable} antialiased`}>
-          {children}
-        </body>
-      </html>
+      {page}
     </ClerkProvider>
   );
 }

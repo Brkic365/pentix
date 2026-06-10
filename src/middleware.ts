@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 const isPublicRoute = createRouteMatcher([
@@ -8,11 +9,19 @@ const isPublicRoute = createRouteMatcher([
   "/manifest.webmanifest",
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
-  if (!isPublicRoute(req)) {
-    await auth.protect();
-  }
-});
+// DEV_AUTH_BYPASS: local demo mode without Clerk (see src/lib/auth.ts)
+const devBypass =
+  process.env.DEV_AUTH_BYPASS === "1" && process.env.NODE_ENV !== "production";
+
+export default devBypass
+  ? function middleware() {
+      return NextResponse.next();
+    }
+  : clerkMiddleware(async (auth, req) => {
+      if (!isPublicRoute(req)) {
+        await auth.protect();
+      }
+    });
 
 export const config = {
   matcher: [
