@@ -245,7 +245,13 @@ export function usePushupCounter(): UsePushupCounterResult {
         audio: false,
       });
       streamRef.current = stream;
-      const video = videoRef.current;
+      // The <video> mounts in the same tick the caller switches stages —
+      // give React a moment instead of racing it.
+      let video = videoRef.current;
+      for (let i = 0; i < 20 && !video; i++) {
+        await new Promise((r) => setTimeout(r, 50));
+        video = videoRef.current;
+      }
       if (!video) throw new Error("Video element missing");
       video.srcObject = stream;
       video.muted = true;
@@ -290,7 +296,11 @@ export function usePushupCounter(): UsePushupCounterResult {
     const recorder = recorderRef.current;
     const finished: Promise<void> = recorder && recorder.state !== "inactive"
       ? new Promise((resolve) => {
-          recorder.onstop = () => resolve();
+          const bail = setTimeout(resolve, 3000); // don't hang on a wedged recorder
+          recorder.onstop = () => {
+            clearTimeout(bail);
+            resolve();
+          };
           recorder.stop();
         })
       : Promise.resolve();

@@ -8,6 +8,7 @@ import { finishMatch, setMatchTeams, startMatch, toggleTracked } from "@/actions
 import { respondToBet, resolveBetManually } from "@/actions/bets";
 import { betTermsLabel, type BetTermsKey } from "@/lib/engine/bets";
 import { GoalFastEntry } from "@/components/GoalFastEntry";
+import { LiveScoreSuggestion } from "@/components/LiveScoreSuggestion";
 import { BetCreateForm, type BetTermOption } from "@/components/BetCreateForm";
 import { TeamFlag } from "@/components/TeamFlag";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
@@ -159,6 +160,18 @@ export default async function MatchPage({
           </div>
         </div>
       </section>
+
+      {isAdmin &&
+        match.isTracked &&
+        match.status !== "FINISHED" &&
+        match.templateMatchId !== null &&
+        process.env.WC_API_BASE && (
+          <LiveScoreSuggestion
+            matchId={matchId}
+            homeScore={match.homeScore}
+            awayScore={match.awayScore}
+          />
+        )}
 
       {/* Admin: assign knockout teams */}
       {isAdmin && !teamsSet && match.status !== "FINISHED" && (
