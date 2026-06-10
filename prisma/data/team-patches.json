@@ -1,0 +1,4 @@
+{
+  "_comment": "Overrides applied on top of worldcup2026.teams.csv at seed time. The dataset was frozen in Feb 2026, before the March 2026 playoffs decided the last six slots (UEFA paths A–D, intercontinental 1–2). Fill these in once known: key = dataset team id, value = { name, fifaCode, iso2, flagUrl }. Re-running `prisma db seed` upserts.",
+  "patches": {}
+}

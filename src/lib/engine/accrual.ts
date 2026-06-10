@@ -35,19 +35,22 @@ export interface GoalBaseResult {
   penaltyGoalApplied: boolean;
 }
 
+/** Lowercased, diacritics-stripped, trimmed — for comparing player names. */
+export function normalizeName(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLowerCase()
+    .trim();
+}
+
 /** Diacritics-insensitive, case-insensitive containment ("livaja" ∈ "Marko LIVAJA") */
 export function scorerMatchesFavorite(scorerName: string, favoriteName: string): boolean {
-  const norm = (s: string) =>
-    s
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .replace(/đ/g, "d")
-      .replace(/Đ/g, "D")
-      .toLowerCase()
-      .trim();
-  const fav = norm(favoriteName);
+  const fav = normalizeName(favoriteName);
   if (!fav) return false;
-  return norm(scorerName).includes(fav);
+  return normalizeName(scorerName).includes(fav);
 }
 
 /** Which side a goal falls on, relative to the tournament's main country. */
